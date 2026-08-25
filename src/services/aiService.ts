@@ -978,7 +978,7 @@ app.delete('/api/products/:id', (req, res) => {
 
 app.listen(5000, () => console.log('Server chạy tại port 5000'));`,
           startTypingFromLine: 24,
-          highlightLines: [25, 27, 29, 34, 36, 40],
+          highlightLines: [25, 27, 29, 34, 36, 39],
           zoomScale: 1.08,
           focusLine: 25,
           speakerScript: "Để hoàn thiện hệ thống, ta cài đặt route PUT cập nhật thuộc tính sản phẩm dựa trên ID bằng toán tử spread, và route DELETE lọc bỏ phần tử khỏi mảng với filter(). Cuối cùng, hàm app.listen khởi động máy chủ tại cổng 5000 sẵn sàng nhận request.",
