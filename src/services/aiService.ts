@@ -1121,7 +1121,7 @@ export async function generateStoryboardWithAI(
   language: string = 'python',
   theme: EditorTheme = 'one-dark',
   aspectRatio: AspectRatio = '16:9'
-): Promise<Storyboard> {
+): Promise<{ storyboard: Storyboard; source: 'gemini-ai' | 'smart-offline' | 'code-parser' }> {
   const trimmed = prompt.trim();
   const isLikelyCode =
     trimmed.includes('def ') ||
@@ -1134,20 +1134,24 @@ export async function generateStoryboardWithAI(
     trimmed.includes('if ') ||
     trimmed.includes('"""') ||
     trimmed.includes("'''") ||
-    trimmed.split('\n').length >= 3;
+    trimmed.split('\n').length >= 4;
 
   if (isLikelyCode) {
-    return convertUserCodeToStoryboard(prompt, language, theme, aspectRatio);
+    const sb = convertUserCodeToStoryboard(prompt, language, theme, aspectRatio);
+    return { storyboard: sb, source: 'code-parser' };
   }
 
   if (apiKey && apiKey.trim()) {
     try {
-      return await callGeminiApi(prompt, apiKey, language, theme, aspectRatio);
+      const sb = await callGeminiApi(prompt, apiKey.trim(), language, theme, aspectRatio);
+      return { storyboard: sb, source: 'gemini-ai' };
     } catch (err: any) {
-      console.warn('Gemini API failed, falling back to smart templates:', err.message);
-      return generateSmartOfflineDemo(prompt, language, theme, aspectRatio);
+      console.warn('Gemini API failed, falling back to smart synthesizer:', err.message);
+      const sb = generateSmartOfflineDemo(prompt, language, theme, aspectRatio);
+      return { storyboard: sb, source: 'smart-offline' };
     }
   }
 
-  return generateSmartOfflineDemo(prompt, language, theme, aspectRatio);
+  const sb = generateSmartOfflineDemo(prompt, language, theme, aspectRatio);
+  return { storyboard: sb, source: 'smart-offline' };
 }

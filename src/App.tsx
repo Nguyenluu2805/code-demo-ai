@@ -76,7 +76,7 @@ export function App() {
   ) => {
     setIsLoading(true);
     try {
-      const generated = await generateStoryboardWithAI(prompt, apiKey, language, theme, aspectRatio);
+      const { storyboard: generated, source } = await generateStoryboardWithAI(prompt, apiKey, language, theme, aspectRatio);
       
       if (speedMode === 'slow') {
         generated.scenes = generated.scenes.map((s) => ({
@@ -91,7 +91,14 @@ export function App() {
       }
 
       setStoryboard(generated);
-      showToast(`Đã tạo thành công video: ${generated.title}`, 'success');
+
+      if (source === 'gemini-ai') {
+        showToast(`✨ Google Gemini AI đã tạo thành công: ${generated.title}`, 'success');
+      } else if (source === 'code-parser') {
+        showToast(`⚡ Đã phân tích cú pháp mã nguồn thành công: ${generated.title}`, 'success');
+      } else {
+        showToast(`📦 Đã tổng hợp kịch bản chuyên sâu: ${generated.title}`, 'success');
+      }
     } catch (err: any) {
       console.error('Failed to generate:', err);
       showToast(`Lỗi khi tạo video: ${err.message || 'Thử lại'}`, 'error');
