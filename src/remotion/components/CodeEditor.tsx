@@ -217,6 +217,9 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
     });
   }, [lineTimelines, frame]);
 
+  // Check if all lines have completed typing
+  const isBlockCompleted = lineStates.every((l) => l.isVisible && l.displayedText === l.fullText);
+
   // Active line calculation for dynamic auto-scroll
   const activeLineObj = lineStates.find((l) => l.isActive);
   const currentFocusLine = activeLineObj
@@ -239,8 +242,6 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
     return Prism.languages[lang] || Prism.languages.javascript || Prism.languages.clike;
   }, [language]);
 
-  const isBlockCompleted = lineStates.every((l) => l.isVisible && l.displayedText === l.fullText);
-
   // Calm Frame-based Cursor Blinking (18 frames visible, 18 frames hidden = 1.2s total calm cycle at 30fps)
   const isCursorFrameVisible = Math.floor(frame / 18) % 2 === 0;
 
@@ -262,8 +263,11 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
           }}
         >
           {lineStates.map((lineState, idx) => {
-            const isHighlighted = highlightLines.includes(lineState.lineNum);
+            const isTargetHighlight = highlightLines.includes(lineState.lineNum);
             const isCurrentActive = lineState.isActive;
+
+            // Highlight state: active typing (blue) or completed spotlight (amber)
+            const showSpotlight = isBlockCompleted && isTargetHighlight;
 
             let highlightedHtml = '';
             try {
@@ -290,31 +294,32 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
             return (
               <div
                 key={idx}
-                className={`flex items-center min-h-[30px] rounded-md transition-all duration-200 relative ${
+                className={`flex items-center min-h-[30px] rounded-md transition-all duration-300 relative ${
                   isCurrentActive
                     ? 'bg-indigo-500/15 border-l-4 border-indigo-400 shadow-sm'
-                    : isHighlighted
-                    ? 'bg-amber-500/10 border-l-4 border-amber-400 font-medium'
+                    : showSpotlight
+                    ? 'bg-amber-500/15 border-l-4 border-amber-400 font-medium shadow-[0_0_12px_rgba(245,158,11,0.12)]'
                     : 'border-l-4 border-transparent'
                 }`}
                 style={{
                   backgroundColor: isCurrentActive
                     ? cfg.lineHighlightBg
-                    : isHighlighted
-                    ? 'rgba(245, 158, 11, 0.12)'
-                    : 'transparent'
+                    : showSpotlight
+                    ? 'rgba(245, 158, 11, 0.14)'
+                    : 'transparent',
+                  opacity: isBlockCompleted && highlightLines.length > 0 && !isTargetHighlight ? 0.72 : 1
                 }}
               >
                 {/* Line Number */}
                 <div
-                  className="w-10 text-right pr-3 text-xs font-mono select-none flex-shrink-0"
+                  className="w-10 text-right pr-3 text-xs font-mono select-none flex-shrink-0 transition-colors"
                   style={{
                     color: isCurrentActive
                       ? cfg.accentColor
-                      : isHighlighted
+                      : showSpotlight
                       ? '#fbbf24'
                       : '#64748b',
-                    fontWeight: isCurrentActive || isHighlighted ? '700' : 'normal'
+                    fontWeight: isCurrentActive || showSpotlight ? '700' : 'normal'
                   }}
                 >
                   {lineState.lineNum}

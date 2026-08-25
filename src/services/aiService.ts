@@ -41,7 +41,7 @@ export const PRESET_TEMPLATES: Record<string, Storyboard> = {
         startTypingFromLine: 1,
         highlightLines: [3, 4],
         zoomScale: 1.1,
-        focusLine: 3,
+        focusLine: 4,
         speakerScript: "Đầu tiên, chúng ta khai báo hàm quicksort nhận vào danh sách arr. Ở dòng 3 và 4, ta xử lý trường hợp cơ sở: nếu mảng có từ 1 phần tử trở xuống thì trả về ngay chính nó vì mảng đã được sắp xếp sẵn.",
         durationInFrames: 270
       },
@@ -128,7 +128,7 @@ export const PRESET_TEMPLATES: Record<string, Storyboard> = {
         startTypingFromLine: 6,
         highlightLines: [6, 7, 8, 9, 10, 11],
         zoomScale: 1.15,
-        focusLine: 6,
+        focusLine: 7,
         speakerScript: "Tại mỗi bước, ta so sánh phần tử ở giữa arr[mid] với target. Nếu bằng target thì tìm thấy và trả về vị trí mid ngay. Nếu nhỏ hơn target thì dịch left = mid + 1, ngược lại nếu lớn hơn thì thu hẹp right = mid - 1. Nếu hết vòng lặp không thấy thì trả về -1.",
         durationInFrames: 330
       },
@@ -164,9 +164,9 @@ export const PRESET_TEMPLATES: Record<string, Storyboard> = {
 export const useCounter = (initialValue: number = 0) => {
   const [count, setCount] = useState<number>(initialValue);`,
         startTypingFromLine: 1,
-        highlightLines: [3, 4],
+        highlightLines: [1, 3, 4],
         zoomScale: 1.1,
-        focusLine: 3,
+        focusLine: 4,
         speakerScript: "Để xây dựng custom hook useCounter trong React với TypeScript, chúng ta import useState và useCallback. Khai báo hook nhận vào tham số initialValue mặc định là 0 và khởi tạo biến state count.",
         durationInFrames: 270
       },
@@ -190,7 +190,7 @@ export const useCounter = (initialValue: number = 0) => {
         startTypingFromLine: 6,
         highlightLines: [6, 7, 8, 10],
         zoomScale: 1.15,
-        focusLine: 6,
+        focusLine: 7,
         speakerScript: "Tiếp theo, ta định nghĩa ba hàm điều khiển: increment tăng 1, decrement giảm 1, và reset đưa về giá trị ban đầu. Tất cả được bọc bằng useCallback để tối ưu hiệu năng render của React trước khi trả về object.",
         durationInFrames: 330
       },
@@ -232,9 +232,9 @@ function authenticateToken(req, res, next) {
     return res.status(401).json({ error: 'Truy cập bị từ chối: Thiếu Token!' });
   }`,
         startTypingFromLine: 1,
-        highlightLines: [4, 5, 7, 8],
+        highlightLines: [4, 5, 8],
         zoomScale: 1.1,
-        focusLine: 4,
+        focusLine: 5,
         speakerScript: "Trong Express, middleware xác thực sẽ đọc header Authorization từ request của client và tách chuỗi Bearer token. Nếu client không gửi token, ta lập tức ngắt kết nối và trả về mã lỗi 401 Unauthorized.",
         durationInFrames: 270
       },
@@ -265,7 +265,7 @@ module.exports = authenticateToken;`,
         startTypingFromLine: 11,
         highlightLines: [11, 12, 13, 14],
         zoomScale: 1.15,
-        focusLine: 11,
+        focusLine: 12,
         speakerScript: "Nếu có token, ta dùng hàm jwt.verify cùng bí mật ACCESS_TOKEN_SECRET để kiểm tra tính hợp lệ. Khi token chuẩn xác, thông tin user được gắn trực tiếp vào req.user và gọi next() để tiếp tục xử lý router.",
         durationInFrames: 330
       },
@@ -290,6 +290,60 @@ Content-Type: application/json
 };
 
 /**
+ * Intelligent Highlight & Focus Extractor:
+ * Identifies the most critical operational statements in a code chunk,
+ * ignoring comments, empty lines, and docstrings.
+ */
+function extractSmartHighlightLines(chunkLines: string[], startTypingFromLine: number): { highlightLines: number[]; focusLine: number } {
+  const scoredLines: { lineNum: number; score: number }[] = [];
+  let inDocstring = false;
+
+  chunkLines.forEach((lineText, idx) => {
+    const lineNum = startTypingFromLine + idx;
+    const trimmed = lineText.trim();
+
+    if (trimmed.startsWith('"""') || trimmed.startsWith("'''")) {
+      inDocstring = !inDocstring;
+      return;
+    }
+    if (inDocstring) return;
+
+    if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith('//') || trimmed.startsWith('/*') || trimmed.startsWith('*')) {
+      return;
+    }
+
+    let score = 1;
+    // Imports
+    if (trimmed.startsWith('import ') || trimmed.startsWith('from ') || trimmed.startsWith('require(')) score += 4;
+    // Method invocations (e.g. .append, .insert, .split)
+    if (/\.[a-zA-Z_]\w*\(/.test(trimmed)) score += 5;
+    // Assignments (e.g. so_list = [...])
+    if (/^[a-zA-Z_]\w*\s*=\s*/.test(trimmed)) score += 4;
+    // Function definition
+    if (trimmed.startsWith('def ') || trimmed.startsWith('class ') || trimmed.startsWith('function ') || trimmed.startsWith('export const ')) score += 4;
+    // Print / logging
+    if (trimmed.startsWith('print(') || trimmed.startsWith('console.log(') || trimmed.startsWith('line(')) score += 3;
+    // Control flow / return
+    if (trimmed.startsWith('return ') || trimmed.startsWith('if ') || trimmed.startsWith('for ') || trimmed.startsWith('while ')) score += 4;
+
+    scoredLines.push({ lineNum, score });
+  });
+
+  if (scoredLines.length === 0) {
+    chunkLines.forEach((l, idx) => {
+      if (l.trim().length > 0) scoredLines.push({ lineNum: startTypingFromLine + idx, score: 1 });
+    });
+  }
+
+  scoredLines.sort((a, b) => b.score - a.score);
+
+  const topLines = scoredLines.slice(0, 4).map((l) => l.lineNum).sort((a, b) => a - b);
+  const focusLine = topLines.length > 0 ? topLines[Math.floor(topLines.length / 2)] : startTypingFromLine;
+
+  return { highlightLines: topLines, focusLine };
+}
+
+/**
  * Call Gemini API to generate intelligent dynamic storyboards
  */
 async function callGeminiApi(
@@ -306,7 +360,7 @@ QUY TẮC QUAN TRỌNG VỀ PHÂN CẢNH VÀ MÃ NGUỒN:
 1. ĐẦY ĐỦ NỘI DUNG (NO TRUNCATION): Tuyệt đối không được cắt xén, viết tắt "..." hoặc bỏ sót logic. Toàn bộ mã nguồn phải hoạt động được và đầy đủ cú pháp.
 2. PHÂN CẢNH TĂNG TIẾN (PROGRESSIVE CODING): Tùy vào độ dài và độ phức tạp, chia thành từ 2 đến 6+ phân cảnh code + 1 cảnh terminal. 
    - Cảnh sau sẽ kế thừa mã nguồn của cảnh trước (được ghi nhận qua startTypingFromLine: chỉ số dòng bắt đầu gõ mới). Các dòng trước startTypingFromLine sẽ xuất hiện sẵn mà không tốn thời gian gõ lại.
-3. ĐỘ DÀI VÀ THỜI LƯỢNG MỖI PHÂN CẢNH: Mỗi phân cảnh gõ từ 4 đến 15 dòng mới. Thiết lập durationInFrames = số_dòng_mới * 45 + 135 frames (thường từ 270 đến 450 frames).
+3. HIGHLIGHT & FOCUS TRỌNG TÂM: Mảng highlightLines PHẢI chọn đúng 2-4 dòng lệnh quan trọng nhất (gán biến, gọi hàm, return, if/while), TUYỆT ĐỐI KHÔNG highlight dòng comment hay dòng trắng. focusLine là dòng trọng tâm nhất để camera căn giữa.
 4. LỜI THUYẾT MINH (speakerScript): Phải là một đoạn văn đầy đủ, giàu kiến thức (3 đến 5 câu chi tiết tiếng Việt), giải thích cặn kẽ từng dòng lệnh mới được viết trong phân cảnh đó.
 5. PHÂN CẢNH CUỐI (TERMINAL): Luôn có ít nhất 1 phân cảnh type="terminal" để chạy thử nghiệm và in ra kết quả kiểm chứng.
 
@@ -389,7 +443,7 @@ Chỉ trả về DUY NHẤT một JSON hợp lệ tuân thủ schema:
 /**
  * Intelligent Semantic Block Parser for Pasted Source Code:
  * Segments code along natural logical boundaries with a minimum chunk size (4-15 lines).
- * Ensures 100% of code lines from line 1 to N are preserved and progressively typed.
+ * Ensures 100% of code lines from line 1 to N are preserved, progressively typed, and accurately highlighted.
  */
 function convertUserCodeToStoryboard(
   rawCode: string,
@@ -410,7 +464,6 @@ function convertUserCodeToStoryboard(
     if (line.startsWith('"""') || line.startsWith("'''")) {
       inDocstring = !inDocstring;
       if (!inDocstring && i + 1 < totalLines) {
-        // Docstring ended -> check if imports follow, break after imports
         let nextIdx = i + 1;
         while (
           nextIdx < totalLines &&
@@ -428,7 +481,6 @@ function convertUserCodeToStoryboard(
     }
 
     if (!inDocstring) {
-      // Check for section comment header or function/class start (ignoring consecutive comment lines)
       const prevLine = i > 0 ? allLines[i - 1].trim() : '';
       const isSectionComment =
         (line.startsWith('# ---') ||
@@ -479,7 +531,9 @@ function convertUserCodeToStoryboard(
     const progressiveCode = allLines.slice(0, endLineIdx).join('\n');
     const startTypingFromLine = startLineIdx + 1; // 1-indexed
     const newLinesCount = endLineIdx - startLineIdx;
-    const highlightLines = Array.from({ length: Math.min(5, newLinesCount) }, (_, i) => startTypingFromLine + i);
+
+    // Intelligent Core Highlighting: Picks only meaningful lines, ignoring comments & docstrings
+    const { highlightLines, focusLine } = extractSmartHighlightLines(chunkLines, startTypingFromLine);
 
     const chunkFirstLine = chunkLines.find((l) => l.trim().length > 0)?.trim() || '';
     let sceneTitle = `Phần ${b + 1}: Triển khai mã nguồn`;
@@ -509,7 +563,7 @@ function convertUserCodeToStoryboard(
       startTypingFromLine,
       highlightLines,
       zoomScale: 1.08,
-      focusLine: startTypingFromLine,
+      focusLine,
       speakerScript,
       durationInFrames: Math.max(270, newLinesCount * 40 + 135)
     });
@@ -576,9 +630,9 @@ function generateSmartOfflineDemo(
             ? `def fibonacci(n, memo={}):\n    if n in memo:\n        return memo[n]\n    if n <= 1:\n        return n`
             : `function fibonacci(n, memo = {}) {\n  if (n in memo) return memo[n];\n  if (n <= 1) return n;`,
           startTypingFromLine: 1,
-          highlightLines: [2, 3, 4],
+          highlightLines: [4],
           zoomScale: 1.1,
-          focusLine: 2,
+          focusLine: 4,
           speakerScript: "Để tính số Fibonacci nhanh nhất, chúng ta sử dụng kỹ thuật Memoization với bảng nhớ memo. Nếu giá trị n đã được tính trước đó thì trả về ngay từ memo, còn nếu n <= 1 thì trả về chính n.",
           durationInFrames: 300
         },
@@ -663,9 +717,9 @@ function generateSmartOfflineDemo(
           ? `def process_data(items):\n    result = []\n    for x in items:\n        if x > 0:\n            result.append(x * 2)\n    return sorted(result)`
           : `function processData(items) {\n  return items\n    .filter(x => x > 0)\n    .map(x => x * 2)\n    .sort((a, b) => a - b);\n}`,
         startTypingFromLine: 3,
-        highlightLines: [3, 4, 5, 6],
+        highlightLines: [4, 5, 6],
         zoomScale: 1.15,
-        focusLine: 4,
+        focusLine: 5,
         speakerScript: `Tiếp theo, chúng ta duyệt qua từng phần tử, lọc các giá trị dương hợp lệ, nhân đôi từng phần tử và sắp xếp mảng tăng dần trước khi trả về kết quả.`,
         durationInFrames: 330
       },
