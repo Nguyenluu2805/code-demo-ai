@@ -88,7 +88,7 @@ export const Subtitles: React.FC<SubtitlesProps> = ({
   const cueTranslateY = interpolate(
     frame,
     [activeCue.startFrame, activeCue.startFrame + fadeSpan],
-    [6, 0],
+    [8, 0],
     {
       extrapolateLeft: 'clamp',
       extrapolateRight: 'clamp'
@@ -97,22 +97,22 @@ export const Subtitles: React.FC<SubtitlesProps> = ({
 
   return (
     <div
-      className="absolute bottom-5 left-0 right-0 flex justify-center px-6 z-30 pointer-events-none"
+      className="absolute bottom-12 sm:bottom-14 left-0 right-0 flex justify-center px-8 z-40 pointer-events-none"
       style={{
         opacity: cueOpacity,
         transform: `translateY(${cueTranslateY}px)`
       }}
     >
-      <div className="max-w-3xl bg-zinc-950/90 backdrop-blur-xl text-white px-5 py-2.5 rounded-xl border border-white/10 shadow-2xl flex items-center gap-3">
-        {/* Animated Speech Wave Indicator */}
-        <div className="flex items-center gap-0.5 px-2 py-1 rounded-md bg-indigo-500/15 border border-indigo-500/30 flex-shrink-0">
-          <span className="w-1 h-3 bg-indigo-400 rounded-full animate-pulse"></span>
-          <span className="w-1 h-4 bg-indigo-300 rounded-full animate-pulse delay-75"></span>
-          <span className="w-1 h-2 bg-indigo-400 rounded-full animate-pulse delay-150"></span>
+      <div className="max-w-4xl bg-slate-950/95 backdrop-blur-2xl text-white px-6 py-3.5 rounded-2xl border border-indigo-500/30 shadow-[0_16px_50px_rgba(0,0,0,0.85)] flex items-center gap-4">
+        {/* Animated Studio Speech Indicator */}
+        <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-500/20 to-purple-500/20 border border-indigo-500/40 flex-shrink-0 shadow-inner">
+          <span className="w-1.5 h-3.5 bg-indigo-400 rounded-full animate-pulse"></span>
+          <span className="w-1.5 h-5 bg-purple-300 rounded-full animate-pulse delay-75"></span>
+          <span className="w-1.5 h-3 bg-indigo-400 rounded-full animate-pulse delay-150"></span>
         </div>
 
-        {/* Dynamic Continuous Subtitle Line */}
-        <p className="text-xs sm:text-[13.5px] font-medium leading-snug text-zinc-100 text-shadow tracking-wide">
+        {/* High-Contrast Large Legible Subtitle Text */}
+        <p className="text-sm sm:text-[15.5px] md:text-[16.5px] font-semibold leading-relaxed text-slate-50 tracking-wide drop-shadow-md">
           {activeCue.text}
         </p>
       </div>
