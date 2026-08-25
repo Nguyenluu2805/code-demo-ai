@@ -452,30 +452,48 @@ function buildComprehensiveSpeakerNarrative(
   const sentences: string[] = [];
   const validLines = chunkLines.map((l) => l.trim()).filter((l) => l.length > 0 && !l.startsWith('#') && !l.startsWith('//'));
 
-  // 1. Detect Imports
+  // 1. Detect Imports (Deduplicated)
   const importLines = validLines.filter((l) => l.startsWith('import ') || l.startsWith('from '));
   if (importLines.length > 0) {
-    const modules = importLines.map((l) => l.replace(/^(import|from)\s+([a-zA-Z0-9_]+).*/, '$2')).join(', ');
-    sentences.push(`Đầu tiên, chúng ta nạp module ${modules} để phục vụ các xử lý cần thiết trong chương trình.`);
+    const rawModules = importLines.map((l) => l.replace(/^(import|from)\s+([a-zA-Z0-9_.]+).*/, '$2').split('.')[0]);
+    const uniqueModules = Array.from(new Set(rawModules)).join(', ');
+    sentences.push(`Đầu tiên, chúng ta nạp module ${uniqueModules} để phục vụ các xử lý cần thiết trong chương trình.`);
   }
 
-  // 2. Detect Function / Class definitions
+  // 2. Detect Lifespan & Context Managers
+  if (validLines.some((l) => l.includes('asynccontextmanager') || l.includes('lifespan'))) {
+    sentences.push('Định nghĩa hàm lifespan bất đồng bộ để quản lý việc khởi tạo tài nguyên kết nối cơ sở dữ liệu khi khởi động và dọn dẹp an toàn khi tắt server.');
+  }
+
+  // 3. Detect Middleware configuration
+  if (validLines.some((l) => l.includes('add_middleware') || l.includes('CORSMiddleware') || l.includes('GZipMiddleware'))) {
+    sentences.push('Cấu hình middleware bảo mật CORS cho phép kết nối an toàn từ domain client và kích hoạt nén GZip để tối ưu tốc độ truyền tải.');
+  } else if (validLines.some((l) => l.includes('@app.middleware(') || l.includes('process_time'))) {
+    sentences.push('Tạo custom middleware đo thời gian xử lý và gắn header X-Process-Time vào mọi phản hồi của hệ thống.');
+  }
+
+  // 4. Detect FastAPI App & Server initialization
+  if (validLines.some((l) => l.includes('FastAPI(') || l.includes('express()') || l.includes('docs_url'))) {
+    sentences.push('Khởi tạo đối tượng ứng dụng với đầy đủ thông tin phiên bản và cấu hình tài liệu tự động Swagger UI.');
+  }
+
+  // 5. Detect Function / Class definitions
   const defLines = validLines.filter((l) => l.startsWith('def ') || l.startsWith('class ') || l.startsWith('function ') || l.startsWith('export const '));
-  if (defLines.length > 0) {
+  if (defLines.length > 0 && !validLines.some((l) => l.includes('lifespan') || l.includes('process_time'))) {
     const names = defLines.map((l) => l.replace(/^(def|class|function|export const)\s+([a-zA-Z0-9_]+).*/, '$2')).join(', ');
     sentences.push(`Tiếp theo, chúng ta định nghĩa cấu trúc chính với ${defLines[0].startsWith('class') ? 'lớp' : 'hàm'} ${names}.`);
   }
 
-  // 3. Detect Variables & Random/Math operations
+  // 6. Detect Variables & Random/Math operations
   const assignLines = validLines.filter((l) => /^[a-zA-Z0-9_]+\s*=/.test(l));
   if (assignLines.some((l) => l.includes('random.randint') || l.includes('Math.random'))) {
     sentences.push('Máy tính sử dụng hàm random để chọn ngẫu nhiên một số bí mật trong khoảng từ 1 đến 100 và khởi tạo bộ đếm số lần đoán.');
-  } else if (assignLines.length > 0 && defLines.length === 0) {
+  } else if (assignLines.length > 0 && defLines.length === 0 && !validLines.some((l) => l.includes('FastAPI(') || l.includes('add_middleware'))) {
     const varNames = assignLines.slice(0, 2).map((l) => l.split('=')[0].trim()).join(', ');
     sentences.push(`Khởi tạo các biến lưu trữ dữ liệu gồm ${varNames} để quản lý trạng thái chương trình.`);
   }
 
-  // 4. Detect Loops & User Inputs
+  // 7. Detect Loops & User Inputs
   if (validLines.some((l) => l.startsWith('while ') || l.startsWith('for '))) {
     sentences.push('Sử dụng vòng lặp để duy trì tương tác liên tục với người dùng cho đến khi đạt điều kiện dừng.');
   }
@@ -483,21 +501,26 @@ function buildComprehensiveSpeakerNarrative(
     sentences.push('Tại mỗi lượt, chương trình nhận dữ liệu dự đoán từ bàn phím và ép kiểu sang số nguyên.');
   }
 
-  // 5. Detect Try/Except error handling
+  // 8. Detect Try/Except error handling
   if (validLines.some((l) => l.startsWith('try:') || l.startsWith('except '))) {
     sentences.push('Bọc khối xử lý trong try/except để bắt lỗi ValueError, đảm bảo chương trình không bị dừng đột ngột khi người chơi nhập sai kiểu.');
   }
 
-  // 6. Detect Conditional branching & Win condition
+  // 9. Detect Conditional branching & Win condition
   if (validLines.some((l) => l.startsWith('if ') || l.startsWith('elif ') || l.startsWith('else:'))) {
     if (validLines.some((l) => l.includes('CHÚC MỪNG') || l.includes('break') || l.includes('thắng') || l.includes('success'))) {
       sentences.push('So sánh số người chơi đoán với số bí mật để đưa ra gợi ý lớn hơn hay nhỏ hơn, đồng thời in thông báo chúc mừng khi đoán trúng và kết thúc lượt chơi.');
-    } else {
+    } else if (!validLines.some((l) => l.includes('lifespan') || l.includes('process_time'))) {
       sentences.push('Thực hiện kiểm tra các điều kiện rẽ nhánh để điều hướng luồng xử lý chính xác.');
     }
   }
 
-  // 7. Detect Method invocations
+  // 10. Detect Health Endpoints & Routing
+  if (validLines.some((l) => l.includes('@app.get("/health') || l.includes('health_check'))) {
+    sentences.push('Cài đặt endpoint kiểm tra sức khỏe /health để giám sát uptime của hệ thống trong môi trường Production.');
+  }
+
+  // 11. Detect Method invocations
   if (validLines.some((l) => l.includes('.append(') || l.includes('.push('))) {
     sentences.push('Gọi phương thức append để chèn phần tử mới vào cuối danh sách.');
   }
@@ -534,7 +557,20 @@ function convertUserCodeToStoryboard(
   let terminalOutput = `[SUCCESS] Thực thi thành công toàn bộ ${allLines.length} dòng code!`;
   let terminalScript = `Chạy thử nghiệm trên terminal, chương trình hoạt động chuẩn xác và hoàn thành toàn bộ tác vụ.`;
 
-  if (lowerCode.includes('game_doan_so') || lowerCode.includes('đoán số') || lowerCode.includes('randint')) {
+  if (lowerCode.includes('fastapi') && (lowerCode.includes('cors') || lowerCode.includes('middleware') || lowerCode.includes('lifespan'))) {
+    filename = 'main.py';
+    title = 'Cấu hình FastAPI Production & Middleware Bảo Mật';
+    terminalOutput = `INFO:     Started server process [8524]
+INFO:     Waiting for application startup.
+[STARTUP] Kết nối Database Pool và nạp Redis Cache...
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+
+>> GET /health -> 200 OK {"status": "healthy", "environment": "production"} (X-Process-Time: 0.0018s)
+>> GET /api/docs -> 200 OK (Swagger UI sẵn sàng)
+[SUCCESS] Khởi chạy FastAPI Production thành công!`;
+    terminalScript = `Khởi chạy server với Uvicorn, ứng dụng nạp các sự kiện khởi động lifespan, cấu hình middleware CORS, đo thời gian xử lý và phục vụ tài liệu Swagger UI chuẩn xác!`;
+  } else if (lowerCode.includes('game_doan_so') || lowerCode.includes('đoán số') || lowerCode.includes('randint')) {
     filename = 'game_doan_so.py';
     title = 'Trò chơi Đoán Số (1 - 100) bằng Python';
     terminalOutput = `=== GAME ĐOÁN SỐ (1 - 100) ===
