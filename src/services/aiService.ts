@@ -388,8 +388,8 @@ Chỉ trả về DUY NHẤT một JSON hợp lệ tuân thủ schema:
 
 /**
  * Intelligent Semantic Block Parser for Pasted Source Code:
- * Segments code along natural logical boundaries (docstrings, imports, function defs, section comments).
- * Ensures 100% of the code lines are preserved, progressively typed, and readable.
+ * Segments code along natural logical boundaries with a minimum chunk size (4-15 lines).
+ * Ensures 100% of code lines from line 1 to N are preserved and progressively typed.
  */
 function convertUserCodeToStoryboard(
   rawCode: string,
@@ -401,61 +401,78 @@ function convertUserCodeToStoryboard(
   const filename = language === 'python' ? 'demo_array.py' : language === 'typescript' ? 'index.ts' : 'app.js';
   const totalLines = allLines.length;
 
-  // Identify natural logical break lines
-  const breakPoints: number[] = [0]; // 0-indexed line start points
-
+  const rawBreakPoints: number[] = [0];
   let inDocstring = false;
+
   for (let i = 0; i < totalLines; i++) {
     const line = allLines[i].trim();
 
     if (line.startsWith('"""') || line.startsWith("'''")) {
       inDocstring = !inDocstring;
-      if (!inDocstring) {
-        // Docstring just ended -> great break point after docstring
-        if (i + 1 < totalLines && !breakPoints.includes(i + 1)) {
-          breakPoints.push(i + 1);
+      if (!inDocstring && i + 1 < totalLines) {
+        // Docstring ended -> check if imports follow, break after imports
+        let nextIdx = i + 1;
+        while (
+          nextIdx < totalLines &&
+          (allLines[nextIdx].trim().startsWith('import ') ||
+            allLines[nextIdx].trim().startsWith('from ') ||
+            allLines[nextIdx].trim() === '')
+        ) {
+          nextIdx++;
+        }
+        if (nextIdx < totalLines && !rawBreakPoints.includes(nextIdx)) {
+          rawBreakPoints.push(nextIdx);
         }
       }
       continue;
     }
 
     if (!inDocstring) {
-      // Check section comment headers (e.g. # ---, // ---, # 1. LIST)
-      if (line.startsWith('# ---') || line.startsWith('// ---') || line.startsWith('# ===') || /^#\s*\d+\./.test(line)) {
-        if (i > 0 && !breakPoints.includes(i)) {
-          breakPoints.push(i);
-        }
-      }
-      // Check function or class definition
-      else if (line.startsWith('def ') || line.startsWith('class ') || line.startsWith('function ') || line.startsWith('export const ')) {
-        if (i > 0 && !breakPoints.includes(i)) {
-          breakPoints.push(i);
-        }
+      // Check for section comment header or function/class start (ignoring consecutive comment lines)
+      const prevLine = i > 0 ? allLines[i - 1].trim() : '';
+      const isSectionComment =
+        (line.startsWith('# ---') ||
+          line.startsWith('// ---') ||
+          line.startsWith('# ===') ||
+          /^#\s*\d+\./.test(line)) &&
+        !prevLine.startsWith('#');
+      const isDefOrClass =
+        line.startsWith('def ') ||
+        line.startsWith('class ') ||
+        line.startsWith('function ') ||
+        line.startsWith('export const ');
+
+      if ((isSectionComment || isDefOrClass) && i > 0 && !rawBreakPoints.includes(i)) {
+        rawBreakPoints.push(i);
       }
     }
   }
 
-  // If few or no logical break points found, chunk every 7-10 lines
-  if (breakPoints.length <= 1) {
-    const chunkSize = totalLines > 30 ? 8 : 6;
-    breakPoints.length = 0;
-    for (let p = 0; p < totalLines; p += chunkSize) {
-      breakPoints.push(p);
+  rawBreakPoints.sort((a, b) => a - b);
+  if (rawBreakPoints[rawBreakPoints.length - 1] !== totalLines) {
+    rawBreakPoints.push(totalLines);
+  }
+
+  // Merge any chunks that are too small (< 4 lines) with the next chunk
+  const finalBreakPoints: number[] = [0];
+  for (let k = 1; k < rawBreakPoints.length; k++) {
+    const prev = finalBreakPoints[finalBreakPoints.length - 1];
+    const curr = rawBreakPoints[k];
+    if (curr - prev >= 4 || k === rawBreakPoints.length - 1) {
+      finalBreakPoints.push(curr);
     }
   }
 
-  // Ensure last boundary is totalLines
-  if (breakPoints[breakPoints.length - 1] !== totalLines) {
-    breakPoints.push(totalLines);
+  if (finalBreakPoints[finalBreakPoints.length - 1] !== totalLines) {
+    finalBreakPoints[finalBreakPoints.length - 1] = totalLines;
   }
 
   const scenes: Scene[] = [];
 
-  for (let b = 0; b < breakPoints.length - 1; b++) {
-    const startLineIdx = breakPoints[b];
-    const endLineIdx = breakPoints[b + 1];
+  for (let b = 0; b < finalBreakPoints.length - 1; b++) {
+    const startLineIdx = finalBreakPoints[b];
+    const endLineIdx = finalBreakPoints[b + 1];
 
-    // Skip empty chunks
     if (endLineIdx <= startLineIdx) continue;
 
     const chunkLines = allLines.slice(startLineIdx, endLineIdx);
@@ -477,7 +494,7 @@ function convertUserCodeToStoryboard(
     } else if (chunkFirstLine.includes('LIST') || chunkFirstLine.includes('so_list') || chunkFirstLine.startsWith('# 1.')) {
       sceneTitle = `Phần ${b + 1}: Thao tác với List trong Python`;
       speakerScript = `Ở phần này, chúng ta khởi tạo một danh sách số nguyên so_list, sau đó thực hiện các thao tác cơ bản như thêm phần tử 60 vào cuối mảng với append và chèn số 5 vào đầu mảng với insert(0, 5).`;
-    } else if (b === breakPoints.length - 2) {
+    } else if (b === finalBreakPoints.length - 2) {
       sceneTitle = `Phần ${b + 1}: Hoàn thiện logic chương trình`;
       speakerScript = `Cuối cùng, chúng ta hoàn tất toàn bộ các câu lệnh còn lại từ dòng ${startTypingFromLine} đến dòng ${endLineIdx}, đảm bảo toàn bộ mã nguồn được liên kết chặt chẽ và sẵn sàng thực thi.`;
     }
@@ -494,7 +511,7 @@ function convertUserCodeToStoryboard(
       zoomScale: 1.08,
       focusLine: startTypingFromLine,
       speakerScript,
-      durationInFrames: Math.max(240, newLinesCount * 40 + 120)
+      durationInFrames: Math.max(270, newLinesCount * 40 + 135)
     });
   }
 
@@ -672,7 +689,6 @@ export async function generateStoryboardWithAI(
   theme: EditorTheme = 'one-dark',
   aspectRatio: AspectRatio = '16:9'
 ): Promise<Storyboard> {
-  // Check if user provided code directly
   const trimmed = prompt.trim();
   const isLikelyCode =
     trimmed.includes('def ') ||
@@ -691,7 +707,6 @@ export async function generateStoryboardWithAI(
     return convertUserCodeToStoryboard(prompt, language, theme, aspectRatio);
   }
 
-  // If API key is provided, use Gemini
   if (apiKey && apiKey.trim()) {
     try {
       return await callGeminiApi(prompt, apiKey, language, theme, aspectRatio);
@@ -701,6 +716,5 @@ export async function generateStoryboardWithAI(
     }
   }
 
-  // Fallback to Smart Templates
   return generateSmartOfflineDemo(prompt, language, theme, aspectRatio);
 }

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { interpolate, useCurrentFrame, spring, useVideoConfig } from 'remotion';
+import { useCurrentFrame } from 'remotion';
 import Prism from 'prismjs';
 import 'prismjs/components/prism-python';
 import 'prismjs/components/prism-javascript';
@@ -150,12 +150,10 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   theme,
   startTypingFromLine = 1,
   highlightLines = [],
-  zoomScale = 1.05,
   focusLine,
   durationInFrames
 }) => {
   const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
   const cfg = THEME_CONFIGS[theme] || THEME_CONFIGS['one-dark'];
 
   // All lines in this code block
@@ -219,28 +217,21 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
     });
   }, [lineTimelines, frame]);
 
-  // Active line calculation for camera zoom and dynamic auto-scroll
+  // Active line calculation for dynamic auto-scroll
   const activeLineObj = lineStates.find((l) => l.isActive);
   const currentFocusLine = activeLineObj
     ? activeLineObj.lineNum
     : focusLine || startTypingFromLine || 1;
 
-  // Smooth camera zoom
-  const zoomProgress = spring({
-    frame,
-    fps,
-    config: { damping: 20, mass: 1.0, stiffness: 60 }
-  });
-
-  const effectiveScale = 1 + (zoomScale - 1) * zoomProgress;
-
   // Adaptive font sizing & line height based on code density
-  const fontSizeClass = rawLines.length > 22 ? 'text-[14px]' : rawLines.length > 14 ? 'text-[15px]' : 'text-[16px] sm:text-[17px]';
-  const lineHeightPx = rawLines.length > 22 ? 32 : 38;
+  const fontSizeClass = rawLines.length > 25 ? 'text-[13.5px]' : rawLines.length > 15 ? 'text-[14.5px]' : 'text-[15.5px]';
+  const LINE_ROW_HEIGHT = rawLines.length > 25 ? 30 : 34;
+  const VISIBLE_LINES = 13;
 
-  // Dynamic Vertical Auto-Scroll Tracking: Smoothly centers the current typing line in view
-  const targetScrollY = currentFocusLine > 6 ? -(currentFocusLine - 5) * lineHeightPx : 0;
-  const lineTranslateY = interpolate(zoomProgress, [0, 1], [0, targetScrollY]);
+  // Precise Centered Viewport Auto-Scroll:
+  const maxScrollPx = Math.max(0, (rawLines.length - VISIBLE_LINES) * LINE_ROW_HEIGHT);
+  const targetScrollPx = currentFocusLine > 10 ? (currentFocusLine - 8) * LINE_ROW_HEIGHT : 0;
+  const lineTranslateY = -Math.min(maxScrollPx, targetScrollPx);
 
   // Syntax highlighting
   const prismLang = useMemo(() => {
@@ -261,14 +252,15 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
         color: cfg.textColor
       }}
     >
-      {/* Code Content Area */}
-      <div
-        className="flex-1 p-5 sm:p-7 overflow-hidden transition-transform duration-200 origin-top-left"
-        style={{
-          transform: `scale(${effectiveScale}) translateY(${lineTranslateY}px)`
-        }}
-      >
-        <div className="flex flex-col space-y-1.5">
+      {/* Code Viewport (fixed container with overflow hidden) */}
+      <div className="flex-1 px-5 py-4 overflow-hidden relative">
+        {/* Animated Scrolling Canvas */}
+        <div
+          className="flex flex-col space-y-0.5 transition-transform duration-200 origin-top"
+          style={{
+            transform: `translateY(${lineTranslateY}px)`
+          }}
+        >
           {lineStates.map((lineState, idx) => {
             const isHighlighted = highlightLines.includes(lineState.lineNum);
             const isCurrentActive = lineState.isActive;
@@ -283,11 +275,11 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
             // If line is not yet visible, keep blank space so layout does not jump
             if (!lineState.isVisible) {
               return (
-                <div key={idx} className="flex items-center h-9 opacity-0 pointer-events-none">
-                  <span className="w-12 text-right pr-4 text-sm font-mono select-none text-slate-600">
+                <div key={idx} className="flex items-center min-h-[30px] opacity-0 pointer-events-none">
+                  <span className="w-10 text-right pr-3 text-xs font-mono select-none text-slate-600">
                     {lineState.lineNum}
                   </span>
-                  <span className="pl-4 whitespace-pre font-mono">&nbsp;</span>
+                  <span className="pl-3 whitespace-pre font-mono">&nbsp;</span>
                 </div>
               );
             }
@@ -298,7 +290,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
             return (
               <div
                 key={idx}
-                className={`flex items-center min-h-[36px] rounded-lg transition-all duration-300 relative ${
+                className={`flex items-center min-h-[30px] rounded-md transition-all duration-200 relative ${
                   isCurrentActive
                     ? 'bg-indigo-500/15 border-l-4 border-indigo-400 shadow-sm'
                     : isHighlighted
@@ -315,7 +307,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
               >
                 {/* Line Number */}
                 <div
-                  className="w-12 text-right pr-4 text-xs font-mono select-none flex-shrink-0"
+                  className="w-10 text-right pr-3 text-xs font-mono select-none flex-shrink-0"
                   style={{
                     color: isCurrentActive
                       ? cfg.accentColor
@@ -329,13 +321,13 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
                 </div>
 
                 {/* Code Line Content */}
-                <div className={`pl-3 pr-4 py-1 whitespace-pre font-mono ${fontSizeClass} flex-1 flex items-center overflow-x-auto scrollbar-none`}>
+                <div className={`pl-3 pr-4 py-0.5 whitespace-pre font-mono ${fontSizeClass} flex-1 flex items-center overflow-x-auto scrollbar-none`}>
                   <span dangerouslySetInnerHTML={{ __html: highlightedHtml || '&nbsp;' }} />
 
                   {/* Calm deterministic cursor on active line */}
                   {isCurrentActive && (
                     <span
-                      className="inline-block w-2.5 h-5 ml-1 align-middle rounded-sm"
+                      className="inline-block w-2.5 h-4 ml-1 align-middle rounded-sm"
                       style={{
                         backgroundColor: cfg.accentColor,
                         opacity: showCursor ? 1 : 0
