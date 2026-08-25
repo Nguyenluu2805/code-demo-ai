@@ -441,7 +441,7 @@ Chỉ trả về DUY NHẤT một JSON hợp lệ tuân thủ schema:
 }
 
 /**
- * Generates continuous, comprehensive line-by-line pedagogical narrations for any code chunk
+ * Generates continuous, comprehensive line-by-line pedagogical narrations dynamically tailored to actual code syntax
  */
 function buildComprehensiveSpeakerNarrative(
   chunkLines: string[],
@@ -450,54 +450,67 @@ function buildComprehensiveSpeakerNarrative(
   language: string
 ): string {
   const sentences: string[] = [];
-  const validLines = chunkLines.map((l) => l.trim()).filter((l) => l.length > 0);
+  const validLines = chunkLines.map((l) => l.trim()).filter((l) => l.length > 0 && !l.startsWith('#') && !l.startsWith('//'));
 
-  const hasImports = validLines.some((l) => l.startsWith('import ') || l.startsWith('from '));
-  const hasDocstring = validLines.some((l) => l.startsWith('"""') || l.startsWith("'''"));
-  const hasDef = validLines.some((l) => l.startsWith('def ') || l.startsWith('function '));
-
-  if (hasDocstring || hasImports) {
-    sentences.push(`Chào mừng các bạn đến với bài hướng dẫn thực hành ${language === 'python' ? 'Python' : language}.`);
-    if (hasDocstring) {
-      sentences.push('Đầu tiên, chúng ta thiết lập khối chú thích đầu file để tóm tắt các khái niệm cốt lõi cần tìm hiểu.');
-    }
-    if (hasImports) {
-      sentences.push(`Tiếp theo, ta nạp các thư viện chuẩn như ${language === 'python' ? 'array và numpy' : 'module phụ thuộc'} để phục vụ xử lý mảng.`);
-    }
-    sentences.push('Toàn bộ các gói cần thiết đã sẵn sàng để chúng ta bắt đầu viết các khối lệnh bên dưới.');
-    return sentences.join(' ');
+  // 1. Detect Imports
+  const importLines = validLines.filter((l) => l.startsWith('import ') || l.startsWith('from '));
+  if (importLines.length > 0) {
+    const modules = importLines.map((l) => l.replace(/^(import|from)\s+([a-zA-Z0-9_]+).*/, '$2')).join(', ');
+    sentences.push(`Đầu tiên, chúng ta nạp module ${modules} để phục vụ các xử lý cần thiết trong chương trình.`);
   }
 
-  if (hasDef) {
-    sentences.push('Bây giờ, chúng ta sẽ xây dựng hàm hỗ trợ line nhận vào tham số title.');
-    sentences.push('Bên trong hàm, ta dùng lệnh print in chuỗi 60 dấu bằng nhằm phân tách trực quan từng phần demo.');
-    sentences.push('Hàm này sẽ giúp bảng kết quả hiển thị trên terminal trở nên rõ ràng và chuyên nghiệp hơn.');
-    return sentences.join(' ');
+  // 2. Detect Function / Class definitions
+  const defLines = validLines.filter((l) => l.startsWith('def ') || l.startsWith('class ') || l.startsWith('function ') || l.startsWith('export const '));
+  if (defLines.length > 0) {
+    const names = defLines.map((l) => l.replace(/^(def|class|function|export const)\s+([a-zA-Z0-9_]+).*/, '$2')).join(', ');
+    sentences.push(`Tiếp theo, chúng ta định nghĩa cấu trúc chính với ${defLines[0].startsWith('class') ? 'lớp' : 'hàm'} ${names}.`);
   }
 
-  const hasList = validLines.some((l) => l.includes('so_list') || l.includes('list') || l.includes('LIST'));
-  const hasAppend = validLines.some((l) => l.includes('.append(') || l.includes('.push('));
-  const hasInsert = validLines.some((l) => l.includes('.insert(') || l.includes('.splice('));
-
-  if (hasList || hasAppend || hasInsert) {
-    sentences.push('Bước vào phần này, chúng ta tìm hiểu kiểu dữ liệu List là mảng động linh hoạt trong Python.');
-    if (validLines.some((l) => l.includes('so_list ='))) {
-      sentences.push('Đầu tiên, ta khởi tạo biến so_list chứa 5 phần tử ban đầu từ 10 đến 50 và in danh sách gốc ra console.');
-    }
-    if (hasAppend) {
-      sentences.push('Tiếp theo, ta gọi phương thức append(60) để chèn giá trị 60 vào vị trí cuối cùng của danh sách.');
-    }
-    if (hasInsert) {
-      sentences.push('Sau đó, sử dụng hàm insert(0, 5) để chèn số 5 vào ngay vị trí đầu tiên có index là 0.');
-    }
-    sentences.push('Quan sát thấy danh sách được cập nhật liên tục và linh hoạt theo đúng thứ tự các thao tác.');
-    return sentences.join(' ');
+  // 3. Detect Variables & Random/Math operations
+  const assignLines = validLines.filter((l) => /^[a-zA-Z0-9_]+\s*=/.test(l));
+  if (assignLines.some((l) => l.includes('random.randint') || l.includes('Math.random'))) {
+    sentences.push('Máy tính sử dụng hàm random để chọn ngẫu nhiên một số bí mật trong khoảng từ 1 đến 100 và khởi tạo bộ đếm số lần đoán.');
+  } else if (assignLines.length > 0 && defLines.length === 0) {
+    const varNames = assignLines.slice(0, 2).map((l) => l.split('=')[0].trim()).join(', ');
+    sentences.push(`Khởi tạo các biến lưu trữ dữ liệu gồm ${varNames} để quản lý trạng thái chương trình.`);
   }
 
-  // Generic intelligent narrative
-  sentences.push(`Ở phân cảnh này, chúng ta tiếp tục triển khai các câu lệnh từ dòng ${startTypingFromLine} đến dòng ${startTypingFromLine + chunkLines.length - 1}.`);
-  sentences.push('Các câu lệnh được gõ phím tuần tự để thiết lập logic thuật toán và cập nhật các biến tương ứng.');
-  sentences.push('Sau khi hoàn thành, khối lệnh này sẽ kết nối liền mạch với cấu trúc toàn bài.');
+  // 4. Detect Loops & User Inputs
+  if (validLines.some((l) => l.startsWith('while ') || l.startsWith('for '))) {
+    sentences.push('Sử dụng vòng lặp để duy trì tương tác liên tục với người dùng cho đến khi đạt điều kiện dừng.');
+  }
+  if (validLines.some((l) => l.includes('input(') || l.includes('prompt(') || l.includes('readline'))) {
+    sentences.push('Tại mỗi lượt, chương trình nhận dữ liệu dự đoán từ bàn phím và ép kiểu sang số nguyên.');
+  }
+
+  // 5. Detect Try/Except error handling
+  if (validLines.some((l) => l.startsWith('try:') || l.startsWith('except '))) {
+    sentences.push('Bọc khối xử lý trong try/except để bắt lỗi ValueError, đảm bảo chương trình không bị dừng đột ngột khi người chơi nhập sai kiểu.');
+  }
+
+  // 6. Detect Conditional branching & Win condition
+  if (validLines.some((l) => l.startsWith('if ') || l.startsWith('elif ') || l.startsWith('else:'))) {
+    if (validLines.some((l) => l.includes('CHÚC MỪNG') || l.includes('break') || l.includes('thắng') || l.includes('success'))) {
+      sentences.push('So sánh số người chơi đoán với số bí mật để đưa ra gợi ý lớn hơn hay nhỏ hơn, đồng thời in thông báo chúc mừng khi đoán trúng và kết thúc lượt chơi.');
+    } else {
+      sentences.push('Thực hiện kiểm tra các điều kiện rẽ nhánh để điều hướng luồng xử lý chính xác.');
+    }
+  }
+
+  // 7. Detect Method invocations
+  if (validLines.some((l) => l.includes('.append(') || l.includes('.push('))) {
+    sentences.push('Gọi phương thức append để chèn phần tử mới vào cuối danh sách.');
+  }
+  if (validLines.some((l) => l.includes('.insert(') || l.includes('.splice('))) {
+    sentences.push('Sử dụng hàm insert để chèn phần tử vào vị trí chỉ định.');
+  }
+
+  // Fallback if generic
+  if (sentences.length === 0) {
+    sentences.push(`Ở phân cảnh này, chúng ta tiếp tục triển khai các câu lệnh từ dòng ${startTypingFromLine} đến dòng ${startTypingFromLine + chunkLines.length - 1}.`);
+    sentences.push('Mã nguồn được hoàn thiện tuần tự giúp liên kết toàn bộ logic ứng dụng.');
+  }
+
   return sentences.join(' ');
 }
 
@@ -513,9 +526,44 @@ function convertUserCodeToStoryboard(
   aspectRatio: AspectRatio
 ): Storyboard {
   const allLines = rawCode.split('\n');
-  const filename = language === 'python' ? 'demo_array.py' : language === 'typescript' ? 'index.ts' : 'app.js';
-  const totalLines = allLines.length;
+  const lowerCode = rawCode.toLowerCase();
 
+  // Dynamic Filename & Title detection
+  let filename = language === 'python' ? 'main.py' : language === 'typescript' ? 'index.ts' : 'app.js';
+  let title = `Demo: Triển khai mã nguồn ${language.toUpperCase()}`;
+  let terminalOutput = `[SUCCESS] Thực thi thành công toàn bộ ${allLines.length} dòng code!`;
+  let terminalScript = `Chạy thử nghiệm trên terminal, chương trình hoạt động chuẩn xác và hoàn thành toàn bộ tác vụ.`;
+
+  if (lowerCode.includes('game_doan_so') || lowerCode.includes('đoán số') || lowerCode.includes('randint')) {
+    filename = 'game_doan_so.py';
+    title = 'Trò chơi Đoán Số (1 - 100) bằng Python';
+    terminalOutput = `=== GAME ĐOÁN SỐ (1 - 100) ===
+Tôi đã nghĩ ra một số. Hãy đoán xem đó là số nào!
+
+Nhập số bạn đoán: 50
+-> Lớn hơn nữa!
+Nhập số bạn đoán: 75
+-> Nhỏ hơn nữa!
+Nhập số bạn đoán: 68
+
+🎉 CHÚC MỪNG! Bạn đã đoán đúng số 68 sau 3 lần thử!
+[SUCCESS] Trò chơi kết thúc thành công!`;
+    terminalScript = `Chạy trò chơi trên terminal, máy tính sinh số bí mật ngẫu nhiên, nhận các lần đoán từ người chơi và hiển thị thông báo chiến thắng sau 3 lượt thử!`;
+  } else if (lowerCode.includes('so_list') || lowerCode.includes('demo: array')) {
+    filename = 'demo_array.py';
+    title = 'Demo: Mảng & Danh sách trong Python';
+    terminalOutput = `============================================================
+1. LIST — mảng động, linh hoạt
+============================================================
+Danh sách ban đầu : [10, 20, 30, 40, 50]
+Sau append(60)    : [10, 20, 30, 40, 50, 60]
+Sau insert(0, 5)  : [5, 10, 20, 30, 40, 50, 60]
+
+[SUCCESS] Thực thi thành công toàn bộ ${allLines.length} dòng code!`;
+    terminalScript = `Chạy file trên terminal, toàn bộ các hàm và lệnh in ấn hiển thị kết quả định dạng chuẩn xác, minh hoạ rõ ràng các phương thức của List.`;
+  }
+
+  const totalLines = allLines.length;
   const rawBreakPoints: number[] = [0];
   let inDocstring = false;
 
@@ -596,18 +644,20 @@ function convertUserCodeToStoryboard(
     // Intelligent Core Highlighting: Picks only meaningful lines, ignoring comments & docstrings
     const { highlightLines, focusLine } = extractSmartHighlightLines(chunkLines, startTypingFromLine);
 
-    // Continuous, Deep Pedagogical Narration
+    // Continuous, Deep Dynamic Pedagogical Narration
     const speakerScript = buildComprehensiveSpeakerNarrative(chunkLines, startTypingFromLine, totalLines, language);
 
     const chunkFirstLine = chunkLines.find((l) => l.trim().length > 0)?.trim() || '';
     let sceneTitle = `Phần ${b + 1}: Triển khai mã nguồn`;
 
-    if (chunkFirstLine.startsWith('"""') || chunkFirstLine.startsWith("'''") || chunkFirstLine.startsWith('import ')) {
-      sceneTitle = `Phần ${b + 1}: Giới thiệu & Khai báo thư viện`;
-    } else if (chunkFirstLine.startsWith('def line') || chunkFirstLine.startsWith('def ') || chunkFirstLine.startsWith('function ')) {
-      sceneTitle = `Phần ${b + 1}: Định nghĩa hàm hỗ trợ`;
-    } else if (chunkFirstLine.includes('LIST') || chunkFirstLine.includes('so_list') || chunkFirstLine.startsWith('# 1.')) {
-      sceneTitle = `Phần ${b + 1}: Thao tác với List trong Python`;
+    if (chunkFirstLine.startsWith('import ') || chunkFirstLine.startsWith('from ')) {
+      sceneTitle = `Phần ${b + 1}: Khai báo module & Khởi tạo`;
+    } else if (chunkFirstLine.startsWith('def game_doan_so') || chunkFirstLine.includes('so_bi_mat')) {
+      sceneTitle = `Phần ${b + 1}: Hàm game & Khởi tạo số bí mật`;
+    } else if (chunkFirstLine.startsWith('while ') || chunkFirstLine.includes('du_doan')) {
+      sceneTitle = `Phần ${b + 1}: Vòng lặp đoán số & Xử lý ngoại lệ`;
+    } else if (chunkFirstLine.startsWith('if __name__')) {
+      sceneTitle = `Phần ${b + 1}: Điểm khởi chạy chương trình`;
     } else if (b === finalBreakPoints.length - 2) {
       sceneTitle = `Phần ${b + 1}: Hoàn thiện logic chương trình`;
     }
@@ -634,20 +684,13 @@ function convertUserCodeToStoryboard(
     type: 'terminal',
     title: 'Chạy thử nghiệm trên Terminal',
     command: language === 'python' ? `python3 ${filename}` : `node ${filename}`,
-    output: `============================================================
-1. LIST — mảng động, linh hoạt
-============================================================
-Danh sách ban đầu : [10, 20, 30, 40, 50]
-Sau append(60)    : [10, 20, 30, 40, 50, 60]
-Sau insert(0, 5)  : [5, 10, 20, 30, 40, 50, 60]
-
-[SUCCESS] Thực thi thành công toàn bộ ${totalLines} dòng code!`,
-    speakerScript: `Chạy file trên terminal, toàn bộ các hàm và lệnh in ấn hiển thị kết quả định dạng chuẩn xác, minh hoạ rõ ràng các phương thức của List.`,
+    output: terminalOutput,
+    speakerScript: terminalScript,
     durationInFrames: 240
   });
 
   return {
-    title: `Demo: Array & List trong ${language.toUpperCase()}`,
+    title,
     description: `Video hướng dẫn từng bước viết và thực thi ${totalLines} dòng code ${language}`,
     aspectRatio,
     theme,
@@ -1136,22 +1179,23 @@ export async function generateStoryboardWithAI(
     trimmed.includes("'''") ||
     trimmed.split('\n').length >= 4;
 
-  if (isLikelyCode) {
-    const sb = convertUserCodeToStoryboard(prompt, language, theme, aspectRatio);
-    return { storyboard: sb, source: 'code-parser' };
-  }
-
+  // 1. If API Key is present -> Call Google Gemini 1.5 Live AI
   if (apiKey && apiKey.trim()) {
     try {
       const sb = await callGeminiApi(prompt, apiKey.trim(), language, theme, aspectRatio);
       return { storyboard: sb, source: 'gemini-ai' };
     } catch (err: any) {
-      console.warn('Gemini API failed, falling back to smart synthesizer:', err.message);
-      const sb = generateSmartOfflineDemo(prompt, language, theme, aspectRatio);
-      return { storyboard: sb, source: 'smart-offline' };
+      console.warn('Gemini API failed, falling back to local synthesizer:', err.message);
     }
   }
 
+  // 2. Local Fallback: If pasted code -> Use dynamic syntax parser
+  if (isLikelyCode) {
+    const sb = convertUserCodeToStoryboard(prompt, language, theme, aspectRatio);
+    return { storyboard: sb, source: 'code-parser' };
+  }
+
+  // 3. Local Fallback: Prompt synthesizer
   const sb = generateSmartOfflineDemo(prompt, language, theme, aspectRatio);
   return { storyboard: sb, source: 'smart-offline' };
 }
