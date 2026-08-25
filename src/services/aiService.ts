@@ -398,13 +398,15 @@ Chỉ trả về DUY NHẤT một JSON hợp lệ tuân thủ schema:
   ]
 }`;
 
-  const models = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash-latest'];
-  let lastErrorMsg = '';
+  const cleanKey = apiKey.trim();
+  const models = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'];
+  let primaryErrorMsg = '';
 
-  for (const model of models) {
+  for (let m = 0; m < models.length; m++) {
+    const model = models[m];
     try {
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${cleanKey}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -428,14 +430,21 @@ Chỉ trả về DUY NHẤT một JSON hợp lệ tuân thủ schema:
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        lastErrorMsg = errorData.error?.message || `HTTP ${response.status}: Lỗi kết nối Google AI`;
-        continue; // Try next model
+        const message = errorData.error?.message || `HTTP ${response.status} lỗi kết nối`;
+
+        // If the key itself is invalid (400 / 403) or quota exhausted (429), stop looping and throw immediately
+        if (response.status === 400 || response.status === 403 || response.status === 429) {
+          throw new Error(message);
+        }
+
+        if (m === 0) primaryErrorMsg = message;
+        continue;
       }
 
       const data = await response.json();
       const textContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!textContent) {
-        lastErrorMsg = 'Gemini API không phản hồi nội dung văn bản';
+        if (m === 0) primaryErrorMsg = 'Gemini API không phản hồi nội dung văn bản';
         continue;
       }
 
@@ -446,11 +455,14 @@ Chỉ trả về DUY NHẤT một JSON hợp lệ tuân thủ schema:
 
       return storyboard;
     } catch (err: any) {
-      lastErrorMsg = err.message || 'Lỗi kết nối mạng';
+      if (err.message && (err.message.includes('API key') || err.message.includes('Quota') || err.message.includes('PERMISSION_DENIED'))) {
+        throw err;
+      }
+      if (m === 0) primaryErrorMsg = err.message || 'Lỗi mạng kết nối tới Google AI';
     }
   }
 
-  throw new Error(lastErrorMsg || 'Không thể tạo kịch bản từ Gemini API');
+  throw new Error(primaryErrorMsg || 'Không thể tạo kịch bản từ Gemini API');
 }
 
 /**
