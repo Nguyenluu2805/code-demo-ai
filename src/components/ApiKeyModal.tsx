@@ -87,26 +87,42 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-3 bg-slate-950/60 border-t border-slate-800 flex justify-end gap-2">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors cursor-pointer"
-          >
-            Hủy
-          </button>
-          <button
-            onClick={handleSave}
-            className="flex items-center gap-1.5 px-5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md transition-all cursor-pointer"
-          >
-            {saved ? (
-              <>
-                <CheckIcon className="w-4 h-4 text-emerald-300" />
-                <span>Đã lưu!</span>
-              </>
-            ) : (
-              <span>Lưu API Key</span>
-            )}
-          </button>
+        <div className="px-6 py-3 bg-slate-950/60 border-t border-slate-800 flex items-center justify-between">
+          {apiKey ? (
+            <button
+              onClick={() => {
+                onSaveKey('');
+                setInputKey('');
+                onClose();
+              }}
+              className="px-3 py-1.5 rounded-xl text-xs font-medium text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+            >
+              Xóa Key (Chuyển Offline)
+            </button>
+          ) : (
+            <div />
+          )}
+          <div className="flex gap-2">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors cursor-pointer"
+            >
+              Hủy
+            </button>
+            <button
+              onClick={handleSave}
+              className="flex items-center gap-1.5 px-5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md transition-all cursor-pointer"
+            >
+              {saved ? (
+                <>
+                  <CheckIcon className="w-3.5 h-3.5" />
+                  <span>Đã lưu!</span>
+                </>
+              ) : (
+                'Lưu API Key'
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>
