@@ -398,46 +398,59 @@ Chỉ trả về DUY NHẤT một JSON hợp lệ tuân thủ schema:
   ]
 }`;
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
+  const models = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash-latest'];
+  let lastErrorMsg = '';
+
+  for (const model of models) {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [
               {
-                text: `${systemPrompt}\n\nYêu cầu tạo video: ${prompt}`
+                parts: [
+                  {
+                    text: `${systemPrompt}\n\nYêu cầu tạo video: ${prompt}`
+                  }
+                ]
               }
-            ]
-          }
-        ],
-        generationConfig: {
-          temperature: 0.2,
-          responseMimeType: 'application/json'
+            ],
+            generationConfig: {
+              temperature: 0.2,
+              responseMimeType: 'application/json'
+            }
+          })
         }
-      })
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        lastErrorMsg = errorData.error?.message || `HTTP ${response.status}: Lỗi kết nối Google AI`;
+        continue; // Try next model
+      }
+
+      const data = await response.json();
+      const textContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!textContent) {
+        lastErrorMsg = 'Gemini API không phản hồi nội dung văn bản';
+        continue;
+      }
+
+      const storyboard = cleanAndParseJson<Storyboard>(textContent);
+      storyboard.theme = theme;
+      storyboard.aspectRatio = aspectRatio;
+      storyboard.fps = 30;
+
+      return storyboard;
+    } catch (err: any) {
+      lastErrorMsg = err.message || 'Lỗi kết nối mạng';
     }
-  );
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error?.message || `HTTP ${response.status}: Lỗi kết nối Gemini API`);
   }
 
-  const data = await response.json();
-  const textContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!textContent) {
-    throw new Error('Gemini API không phản hồi dữ liệu');
-  }
-
-  const storyboard = cleanAndParseJson<Storyboard>(textContent);
-  storyboard.theme = theme;
-  storyboard.aspectRatio = aspectRatio;
-  storyboard.fps = 30;
-
-  return storyboard;
+  throw new Error(lastErrorMsg || 'Không thể tạo kịch bản từ Gemini API');
 }
 
 /**
@@ -1385,23 +1398,24 @@ export async function generateStoryboardWithAI(
     trimmed.includes("'''") ||
     trimmed.split('\n').length >= 4;
 
-  // 1. If API Key is present -> Call Google Gemini 1.5 Live AI
+  // 1. STRICT MODE: If API Key is present -> ONLY Call Google Gemini Live AI (NO Offline Fallback)
   if (apiKey && apiKey.trim()) {
     try {
       const sb = await callGeminiApi(prompt, apiKey.trim(), language, theme, aspectRatio);
       return { storyboard: sb, source: 'gemini-ai' };
     } catch (err: any) {
-      console.warn('Gemini API failed, falling back to local synthesizer:', err.message);
+      // Strictly throw the error so user is notified immediately of the API issue
+      throw new Error(`[Gemini AI Error] ${err.message || 'Không thể kết nối đến Gemini API. Vui lòng kiểm tra lại API Key'}`);
     }
   }
 
-  // 2. Local Fallback: If pasted code -> Use dynamic syntax parser
+  // 2. Offline Mode (No API Key): If user pasted code -> Use dynamic syntax parser
   if (isLikelyCode) {
     const sb = convertUserCodeToStoryboard(prompt, language, theme, aspectRatio);
     return { storyboard: sb, source: 'code-parser' };
   }
 
-  // 3. Local Fallback: Prompt synthesizer
+  // 3. Offline Mode (No API Key): Prompt synthesizer
   const sb = generateSmartOfflineDemo(prompt, language, theme, aspectRatio);
   return { storyboard: sb, source: 'smart-offline' };
 }
