@@ -203,7 +203,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
     });
   }, [lineTimelines, frame]);
 
-  // Active line calculation for camera zoom and auto-scroll
+  // Active line calculation for camera zoom and dynamic auto-scroll
   const activeLineObj = lineStates.find((l) => l.isActive);
   const currentFocusLine = activeLineObj ? activeLineObj.lineNum : focusLine || 1;
 
@@ -216,11 +216,13 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
 
   const effectiveScale = 1 + (zoomScale - 1) * zoomProgress;
 
-  // Auto vertical scroll to keep active line centered
-  const LINE_HEIGHT_PX = 38;
-  const lineTranslateY = zoomScale > 1 && currentFocusLine > 4
-    ? interpolate(zoomProgress, [0, 1], [0, -Math.min(220, (currentFocusLine - 3) * LINE_HEIGHT_PX)])
-    : 0;
+  // Adaptive font sizing & line height based on code density
+  const fontSizeClass = rawLines.length > 20 ? 'text-[14px]' : rawLines.length > 14 ? 'text-[15px]' : 'text-[16px] sm:text-[17px]';
+  const lineHeightPx = rawLines.length > 20 ? 32 : 38;
+
+  // Dynamic Vertical Auto-Scroll Tracking: Smoothly centers the current typing line in view
+  const targetScrollY = currentFocusLine > 5 ? -(currentFocusLine - 4) * lineHeightPx : 0;
+  const lineTranslateY = interpolate(zoomProgress, [0, 1], [0, targetScrollY]);
 
   // Syntax highlighting
   const prismLang = useMemo(() => {
@@ -235,7 +237,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
 
   return (
     <div
-      className="w-full h-full flex flex-col font-mono text-[16px] sm:text-[17px] leading-relaxed overflow-hidden relative select-none"
+      className={`w-full h-full flex flex-col font-mono ${fontSizeClass} leading-relaxed overflow-hidden relative select-none`}
       style={{
         backgroundColor: cfg.editorBg,
         color: cfg.textColor
@@ -243,7 +245,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
     >
       {/* Code Content Area */}
       <div
-        className="flex-1 p-5 sm:p-7 overflow-hidden transition-transform duration-150 origin-top-left"
+        className="flex-1 p-5 sm:p-7 overflow-hidden transition-transform duration-200 origin-top-left"
         style={{
           transform: `scale(${effectiveScale}) translateY(${lineTranslateY}px)`
         }}
@@ -309,7 +311,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
                 </div>
 
                 {/* Code Line Content */}
-                <div className="pl-3 pr-4 py-1 whitespace-pre font-mono text-[16px] sm:text-[17px] flex-1 flex items-center overflow-x-auto scrollbar-none">
+                <div className={`pl-3 pr-4 py-1 whitespace-pre font-mono ${fontSizeClass} flex-1 flex items-center overflow-x-auto scrollbar-none`}>
                   <span dangerouslySetInnerHTML={{ __html: highlightedHtml || '&nbsp;' }} />
 
                   {/* Calm deterministic cursor on active line */}
@@ -333,7 +335,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
       {isBlockCompleted && (
         <div className="absolute top-3 right-4 px-3 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-sans font-medium flex items-center gap-1.5 animate-fadeIn">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>Khối mã nguồn hoàn chỉnh</span>
+          <span>Khối mã nguồn hoàn chỉnh ({rawLines.length} dòng)</span>
         </div>
       )}
     </div>

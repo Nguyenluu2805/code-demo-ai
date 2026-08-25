@@ -42,7 +42,7 @@ export const PRESET_TEMPLATES: Record<string, Storyboard> = {
         zoomScale: 1.1,
         focusLine: 3,
         speakerScript: "Đầu tiên, chúng ta khai báo hàm quicksort nhận vào danh sách arr. Ở dòng 3 và 4, ta xử lý trường hợp cơ sở: nếu mảng có từ 1 phần tử trở xuống thì trả về ngay chính nó vì mảng đã được sắp xếp sẵn.",
-        durationInFrames: 270 // 9.0s
+        durationInFrames: 270
       },
       {
         id: 'scene-2',
@@ -64,7 +64,7 @@ export const PRESET_TEMPLATES: Record<string, Storyboard> = {
         zoomScale: 1.15,
         focusLine: 6,
         speakerScript: "Tiếp theo, ta chọn phần tử Pivot ở giữa mảng. Dùng list comprehension để chia mảng thành 3 nhóm: các số nhỏ hơn Pivot đưa vào mảng left, bằng Pivot đưa vào middle, và lớn hơn Pivot đưa vào right. Sau đó gọi đệ quy sắp xếp và gộp lại.",
-        durationInFrames: 330 // 11.0s
+        durationInFrames: 330
       },
       {
         id: 'scene-3',
@@ -75,7 +75,7 @@ export const PRESET_TEMPLATES: Record<string, Storyboard> = {
 >> print("Mảng đã sắp xếp:", quicksort(arr))
 [SUCCESS] Mảng đã sắp xếp: [3, 9, 10, 27, 38, 43, 82]`,
         speakerScript: "Cuối cùng, chúng ta chạy thử nghiệm trên terminal với mảng số ngẫu nhiên. Thuật toán phân hoạch đệ quy nhanh chóng trả về mảng được sắp xếp tăng dần chính xác.",
-        durationInFrames: 210 // 7.0s
+        durationInFrames: 210
       }
     ]
   },
@@ -101,7 +101,7 @@ export const PRESET_TEMPLATES: Record<string, Storyboard> = {
         zoomScale: 1.1,
         focusLine: 2,
         speakerScript: "Thuật toán tìm kiếm nhị phân yêu cầu mảng đã sắp xếp. Đầu tiên, chúng ta thiết lập 2 con trỏ left tại vị trí 0 và right ở cuối mảng. Vòng lặp while sẽ chạy liên tục chừng nào left chưa vượt quá right, và tính toán vị trí chỉ số ở giữa mid.",
-        durationInFrames: 270 // 9.0s
+        durationInFrames: 270
       },
       {
         id: 'bs-2',
@@ -126,7 +126,7 @@ export const PRESET_TEMPLATES: Record<string, Storyboard> = {
         zoomScale: 1.15,
         focusLine: 6,
         speakerScript: "Tại mỗi bước, ta so sánh phần tử ở giữa arr[mid] với target. Nếu bằng target thì tìm thấy và trả về vị trí mid ngay. Nếu nhỏ hơn target thì dịch left = mid + 1, ngược lại nếu lớn hơn thì thu hẹp right = mid - 1. Nếu hết vòng lặp không thấy thì trả về -1.",
-        durationInFrames: 330 // 11.0s
+        durationInFrames: 330
       },
       {
         id: 'bs-3',
@@ -138,7 +138,7 @@ export const PRESET_TEMPLATES: Record<string, Storyboard> = {
 >> index = binary_search(numbers, target)
 [SUCCESS] Tìm thấy target 23 tại vị trí index: 5 (chỉ sau 3 bước so sánh!)`,
         speakerScript: "Chạy thử với mảng 10 phần tử và số cần tìm là 23. Nhờ chia đôi không gian tìm kiếm ở mỗi bước, thuật toán chỉ mất đúng 3 lần so sánh là tìm ra kết quả chính xác!",
-        durationInFrames: 210 // 7.0s
+        durationInFrames: 210
       }
     ]
   },
@@ -158,26 +158,26 @@ export const PRESET_TEMPLATES: Record<string, Storyboard> = {
         code: `import { useState, useCallback } from 'react';
 
 export const useCounter = (initialValue: number = 0) => {
-  const [count, setCount] = useState(initialValue);`,
+  const [count, setCount] = useState<number>(initialValue);`,
         highlightLines: [3, 4],
         zoomScale: 1.1,
         focusLine: 3,
-        speakerScript: "Chúng ta bắt đầu xây dựng custom hook useCounter nhận vào tham số initialValue mặc định là 0. Khởi tạo state count để lưu trữ giá trị đếm hiện tại bằng useState.",
+        speakerScript: "Để xây dựng custom hook useCounter trong React với TypeScript, chúng ta import useState và useCallback. Khai báo hook nhận vào tham số initialValue mặc định là 0 và khởi tạo biến state count.",
         durationInFrames: 270
       },
       {
         id: 'sc-2',
         type: 'editor',
-        title: 'Định nghĩa các hàm thao tác',
+        title: 'Định nghĩa các hàm cập nhật State',
         filename: 'useCounter.ts',
         language: 'typescript',
         code: `import { useState, useCallback } from 'react';
 
 export const useCounter = (initialValue: number = 0) => {
-  const [count, setCount] = useState(initialValue);
+  const [count, setCount] = useState<number>(initialValue);
 
-  const increment = useCallback(() => setCount((c) => c + 1), []);
-  const decrement = useCallback(() => setCount((c) => c - 1), []);
+  const increment = useCallback(() => setCount(c => c + 1), []);
+  const decrement = useCallback(() => setCount(c => c - 1), []);
   const reset = useCallback(() => setCount(initialValue), [initialValue]);
 
   return { count, increment, decrement, reset };
@@ -185,119 +185,105 @@ export const useCounter = (initialValue: number = 0) => {
         highlightLines: [6, 7, 8, 10],
         zoomScale: 1.15,
         focusLine: 6,
-        speakerScript: "Tiếp theo, định nghĩa 3 hàm thao tác: increment tăng 1 đơn vị, decrement giảm 1 đơn vị, và reset đưa về giá trị ban đầu. Cả 3 hàm đều được bọc trong useCallback để tối ưu re-render. Cuối cùng trả về object chứa count và các hàm điều khiển.",
-        durationInFrames: 360
+        speakerScript: "Tiếp theo, ta định nghĩa ba hàm điều khiển: increment tăng 1, decrement giảm 1, và reset đưa về giá trị ban đầu. Tất cả được bọc bằng useCallback để tối ưu hiệu năng render của React trước khi trả về object.",
+        durationInFrames: 330
       },
       {
         id: 'sc-3',
         type: 'terminal',
-        title: 'Chạy thử nghiệm Jest Test',
+        title: 'Kiểm thử Custom Hook',
         command: 'npm test useCounter.test.ts',
-        output: `PASS  src/hooks/useCounter.test.ts
-  ✓ should initialize with default value (4 ms)
-  ✓ should increment and decrement correctly (6 ms)
-  ✓ should reset to initial value (2 ms)
-
-Test Suites: 1 passed, 1 total
-Tests:       3 passed, 3 total`,
-        speakerScript: "Chạy bộ kiểm thử tự động với Jest, tất cả 3 trường hợp tăng, giảm và reset đều vượt qua hoàn hảo!",
+        output: `PASS src/hooks/useCounter.test.ts
+✓ should initialize counter with 0 (4 ms)
+✓ should increment and decrement correctly (2 ms)
+✓ should reset to initial value (2 ms)
+Test Suites: 1 passed, 1 total`,
+        speakerScript: "Chạy thử nghiệm Jest test suite cho hook useCounter. Tất cả các test case tăng, giảm và reset đều vượt qua hoàn hảo!",
         durationInFrames: 210
       }
     ]
   },
   'express-jwt-api': {
-    title: 'Xác thực JWT Middleware trong Node.js',
-    description: 'Demo Middleware kiểm tra Access Token trong Express REST API',
+    title: 'Xác thực JWT Middleware trong Express API',
+    description: 'Xây dựng middleware bảo mật Endpoint REST API với JsonWebToken',
     aspectRatio: '16:9',
     theme: 'github-dark',
     fps: 30,
     scenes: [
       {
-        id: 'exp-1',
+        id: 'jwt-1',
         type: 'editor',
-        title: 'Viết Auth Middleware',
+        title: 'Lấy token từ Header và kiểm tra',
         filename: 'auth.middleware.js',
         language: 'javascript',
         code: `const jwt = require('jsonwebtoken');
 
-const verifyToken = (req, res, next) => {
+function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
-
+  
   if (!token) {
-    return res.status(401).json({ error: 'Truy cập bị từ chối!' });
+    return res.status(401).json({ error: 'Truy cập bị từ chối: Thiếu Token!' });
+  }`,
+        highlightLines: [4, 5, 7, 8],
+        zoomScale: 1.1,
+        focusLine: 4,
+        speakerScript: "Trong Express, middleware xác thực sẽ đọc header Authorization từ request của client và tách chuỗi Bearer token. Nếu client không gửi token, ta lập tức ngắt kết nối và trả về mã lỗi 401 Unauthorized.",
+        durationInFrames: 270
+      },
+      {
+        id: 'jwt-2',
+        type: 'editor',
+        title: 'Verify Token và gắn User vào Request',
+        filename: 'auth.middleware.js',
+        language: 'javascript',
+        code: `const jwt = require('jsonwebtoken');
+
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  
+  if (!token) {
+    return res.status(401).json({ error: 'Truy cập bị từ chối: Thiếu Token!' });
   }
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ error: 'Token không hợp lệ' });
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
+    if (err) return res.status(403).json({ error: 'Token không hợp lệ hoặc đã hết hạn!' });
     req.user = user;
     next();
   });
-};`,
-        highlightLines: [4, 5, 7, 8, 11, 13, 14],
-        zoomScale: 1.1,
-        focusLine: 7,
-        speakerScript: "Chúng ta xây dựng hàm verifyToken làm middleware trung gian. Đầu tiên trích xuất Bearer Token từ header Authorization. Nếu không có token, trả về mã lỗi 401 Unauthorized. Ngược lại, dùng jwt.verify kiểm tra token với khóa bí mật trước khi chuyển tiếp cho controller.",
-        durationInFrames: 360 // 12.0s
+}
+
+module.exports = authenticateToken;`,
+        highlightLines: [11, 12, 13, 14],
+        zoomScale: 1.15,
+        focusLine: 11,
+        speakerScript: "Nếu có token, ta dùng hàm jwt.verify cùng bí mật ACCESS_TOKEN_SECRET để kiểm tra tính hợp lệ. Khi token chuẩn xác, thông tin user được gắn trực tiếp vào req.user và gọi next() để tiếp tục xử lý router.",
+        durationInFrames: 330
       },
       {
-        id: 'exp-2',
+        id: 'jwt-3',
         type: 'terminal',
-        title: 'Kiểm tra với cURL',
-        command: 'curl -H "Authorization: Bearer valid_token_here" http://localhost:5000/api/profile',
-        output: `{
-  "status": 200,
-  "message": "Xác thực thành công",
-  "data": {
-    "userId": "usr_9981",
-    "name": "Alex Nguyen",
-    "role": "admin"
-  }
+        title: 'Thử nghiệm gọi API với cURL',
+        command: 'curl -H "Authorization: Bearer valid_token_xyz" http://localhost:5000/api/profile',
+        output: `HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "status": "success",
+  "user": { "id": 1024, "username": "alex_dev", "role": "admin" },
+  "message": "Xác thực danh tính thành công qua JWT Token!"
 }`,
-        speakerScript: "Gửi request test bằng lệnh cURL kèm access token hợp lệ trong header Authorization. Server giải mã thành công thông tin người dùng và phản hồi dữ liệu JSON với mã HTTP 200.",
-        durationInFrames: 210 // 7.0s
+        speakerScript: "Gửi request kiểm thử có kèm Bearer token qua curl, server phản hồi mã 200 OK cùng dữ liệu người dùng được xác thực thành công!",
+        durationInFrames: 210
       }
     ]
   }
 };
 
-export async function generateStoryboardWithAI(
-  prompt: string,
-  apiKey?: string,
-  language: string = 'python',
-  theme: EditorTheme = 'one-dark',
-  aspectRatio: AspectRatio = '16:9'
-): Promise<Storyboard> {
-  const trimmed = prompt.trim();
-  if (!trimmed) {
-    return { ...PRESET_TEMPLATES['quicksort-python'], theme, aspectRatio };
-  }
-
-  // 1. Check if user pasted direct raw code
-  const isDirectCode = trimmed.includes('\n') && (
-    trimmed.includes('def ') || trimmed.includes('function ') ||
-    trimmed.includes('const ') || trimmed.includes('class ') ||
-    trimmed.includes('import ') || trimmed.includes('return ') ||
-    trimmed.includes(';') || trimmed.includes('{')
-  );
-
-  if (isDirectCode) {
-    return convertUserCodeToStoryboard(trimmed, language, theme, aspectRatio);
-  }
-
-  // 2. If API Key provided, call Gemini
-  if (apiKey && apiKey.trim().length > 10) {
-    try {
-      return await callGeminiApi(trimmed, apiKey.trim(), language, theme, aspectRatio);
-    } catch (err: any) {
-      console.warn('Gemini API failed, falling back to smart offline generator:', err);
-    }
-  }
-
-  // 3. Smart Offline Generator
-  return generateSmartOfflineDemo(trimmed, language, theme, aspectRatio);
-}
-
+/**
+ * Call Gemini API to generate intelligent dynamic storyboards
+ */
 async function callGeminiApi(
   prompt: string,
   apiKey: string,
@@ -305,15 +291,17 @@ async function callGeminiApi(
   theme: EditorTheme,
   aspectRatio: AspectRatio
 ): Promise<Storyboard> {
-  const systemPrompt = `Bạn là chuyên gia lập trình và đạo diễn video hướng dẫn code chuyên nghiệp.
-Nhiệm vụ: Chuyển đổi yêu cầu "${prompt}" thành một Storyboard Video Demo code dạng JSON.
+  const systemPrompt = `Bạn là một đạo diễn video kỹ thuật và chuyên gia lập trình cấp cao.
+Nhiệm vụ: Chuyển đổi yêu cầu "${prompt}" thành một Storyboard Video Demo code hoàn chỉnh dạng JSON.
 
-Quy tắc quan trọng:
-1. Thời lượng & Tốc độ gõ: Video diễn ra chậm rãi, nhịp nhàng từng dòng để người xem kịp đọc và hiểu. Mỗi phân cảnh code kéo dài từ 270 đến 360 frames (9 đến 12 giây).
-2. Lời thuyết minh (speakerScript): Phải là một đoạn văn hoàn chỉnh (2 đến 4 câu chi tiết tiếng Việt), giải thích cặn kẽ từng dòng lệnh bên trong đang làm gì, tại sao viết như vậy và ý nghĩa của khối code. TUYỆT ĐỐI KHÔNG viết cụt lủn 1 câu ngắn.
-3. Chia thành 2 - 3 Scene mạch lạc (tối đa 12 dòng code mỗi cảnh).
+QUY TẮC QUAN TRỌNG VỀ PHÂN CẢNH VÀ MÃ NGUỒN:
+1. ĐẦY ĐỦ NỘI DUNG (NO TRUNCATION): Tuyệt đối không được cắt xén, viết tắt "..." hoặc bỏ sót logic. Toàn bộ mã nguồn phải hoạt động được và đầy đủ cú pháp.
+2. PHÂN CẢNH LINH HOẠT THEO KHỐI LOGIC: Không bị giới hạn 3 cảnh! Tùy vào độ dài và độ phức tạp của thuật toán/chương trình, hãy tự động chia thành từ 3 đến 6+ phân cảnh mạch lạc theo tiến trình viết code thực tế (ví dụ: Cảnh 1 Khởi tạo/Imports -> Cảnh 2 Cấu trúc dữ liệu/Hàm phụ -> Cảnh 3 Thuật toán chính -> Cảnh 4 Xử lý biên/Hoàn tất -> Cảnh Terminal chạy thử).
+3. ĐỘ DÀI MỖI PHÂN CẢNH: Mỗi phân cảnh code có thể chứa từ 5 đến 25+ dòng code. Hãy thiết lập durationInFrames tương ứng với số dòng (công thức: số_dòng * 40 + 120 frames, thường từ 270 đến 540 frames) để người xem kịp quan sát trọn vẹn từng dòng gõ.
+4. LỜI THUYẾT MINH (speakerScript): Phải là một đoạn văn đầy đủ, giàu kiến thức (3 đến 5 câu chi tiết tiếng Việt), giải thích cặn kẽ từng dòng lệnh, lý do thuật toán và cách hoạt động của khối code trong phân cảnh đó.
+5. PHÂN CẢNH CUỐI (TERMINAL): Luôn có ít nhất 1 phân cảnh type="terminal" để chạy thử nghiệm và in ra kết quả kiểm chứng.
 
-Chỉ trả về DUY NHẤT một JSON hợp lệ tuân thủ cấu trúc sau:
+Chỉ trả về DUY NHẤT một JSON hợp lệ tuân thủ schema:
 {
   "title": "Tiêu đề video",
   "description": "Mô tả ngắn gọn",
@@ -327,21 +315,21 @@ Chỉ trả về DUY NHẤT một JSON hợp lệ tuân thủ cấu trúc sau:
       "title": "Tiêu đề cảnh 1",
       "filename": "main.${language === 'python' ? 'py' : language === 'typescript' ? 'ts' : 'js'}",
       "language": "${language}",
-      "code": "mã nguồn cảnh 1...",
+      "code": "mã nguồn đầy đủ cảnh 1...",
       "highlightLines": [1, 2],
       "zoomScale": 1.1,
       "focusLine": 1,
-      "speakerScript": "Đoạn văn thuyết minh đầy đủ 2-4 câu giải thích chi tiết toàn bộ logic code bên trong...",
-      "durationInFrames": 300
+      "speakerScript": "Đoạn văn thuyết minh 3-5 câu giải thích chi tiết logic...",
+      "durationInFrames": 330
     },
     {
-      "id": "scene-2",
+      "id": "scene-final",
       "type": "terminal",
       "title": "Chạy thử kết quả",
       "command": "${language === 'python' ? 'python main.py' : 'node main.js'}",
       "output": "kết quả in ra terminal...",
-      "speakerScript": "Đoạn văn thuyết minh phân tích kết quả chạy được...",
-      "durationInFrames": 210
+      "speakerScript": "Đoạn văn phân tích kết quả...",
+      "durationInFrames": 240
     }
   ]
 }`;
@@ -388,16 +376,23 @@ Chỉ trả về DUY NHẤT một JSON hợp lệ tuân thủ cấu trúc sau:
   return storyboard;
 }
 
+/**
+ * Intelligent Multi-Scene Splitter for Pasted Source Code:
+ * Dynamically chunks large source code into progressive logical scenes (2 to 6+ scenes)
+ * preserving full code content with auto-calculated comfortable durations.
+ */
 function convertUserCodeToStoryboard(
   rawCode: string,
   language: string,
   theme: EditorTheme,
   aspectRatio: AspectRatio
 ): Storyboard {
-  const lines = rawCode.split('\n');
+  const allLines = rawCode.split('\n');
   const filename = language === 'python' ? 'main.py' : language === 'typescript' ? 'index.ts' : 'app.js';
+  const totalLines = allLines.length;
 
-  if (lines.length <= 6) {
+  // Short code (<= 8 lines): 1 Editor scene + 1 Terminal scene
+  if (totalLines <= 8) {
     return {
       title: `Demo mã nguồn ${language.toUpperCase()}`,
       description: `Video hướng dẫn và thực thi đoạn code ${language}`,
@@ -408,22 +403,22 @@ function convertUserCodeToStoryboard(
         {
           id: 'user-sc-1',
           type: 'editor',
-          title: 'Triển khai mã nguồn',
+          title: 'Triển khai mã nguồn hoàn chỉnh',
           filename,
           language,
           code: rawCode,
-          highlightLines: [1, Math.min(lines.length, 3)],
+          highlightLines: [1, Math.min(totalLines, 3)],
           zoomScale: 1.1,
           focusLine: 1,
-          speakerScript: `Đây là toàn bộ đoạn mã nguồn ${language.toUpperCase()} chúng ta đã triển khai. Các bạn hãy quan sát kỹ cấu trúc khai báo và luồng xử lý dữ liệu từ đầu đến cuối của hàm này.`,
-          durationInFrames: Math.max(270, lines.length * 50 + 90)
+          speakerScript: `Đây là toàn bộ đoạn mã nguồn ${language.toUpperCase()} được triển khai đầy đủ. Mời các bạn quan sát cú pháp khai báo và luồng xử lý dữ liệu của chương trình.`,
+          durationInFrames: Math.max(270, totalLines * 45 + 120)
         },
         {
           id: 'user-sc-2',
           type: 'terminal',
-          title: 'Kết quả chạy thử',
+          title: 'Kết quả chạy thử trên Terminal',
           command: language === 'python' ? `python ${filename}` : `node ${filename}`,
-          output: `[INFO] Đang chạy ${filename}...\n[SUCCESS] Thực thi hoàn tất không có lỗi.\nKết quả trả về hợp lệ.`,
+          output: `[INFO] Đang thực thi ${filename}...\n[SUCCESS] Chương trình chạy hoàn tất không có lỗi.\nKết quả đầu ra hợp lệ.`,
           speakerScript: 'Sau khi chạy chương trình trên terminal, kết quả được tính toán và in ra một cách chính xác theo đúng mong muốn.',
           durationInFrames: 210
         }
@@ -431,53 +426,65 @@ function convertUserCodeToStoryboard(
     };
   }
 
-  const midPoint = Math.floor(lines.length / 2);
-  const part1 = lines.slice(0, midPoint).join('\n');
-  const part2 = rawCode;
+  // Multi-scene progressive chunking based on natural logical line count
+  // Target 6 to 12 lines per progressive step so each scene looks clean and informative
+  const linesPerChunk = totalLines > 36 ? Math.ceil(totalLines / 4) : totalLines > 20 ? Math.ceil(totalLines / 3) : Math.ceil(totalLines / 2);
+  const numChunks = Math.ceil(totalLines / linesPerChunk);
+  const scenes: Scene[] = [];
+
+  for (let c = 0; c < numChunks; c++) {
+    const endLineIdx = Math.min(totalLines, (c + 1) * linesPerChunk);
+    const startLineIdx = Math.max(0, c * linesPerChunk);
+    const progressiveCode = allLines.slice(0, endLineIdx).join('\n');
+    const newLinesCount = endLineIdx - startLineIdx;
+    const highlightLines = Array.from({ length: Math.min(4, newLinesCount) }, (_, i) => startLineIdx + i + 1);
+
+    const isLastCodeChunk = c === numChunks - 1;
+    const sceneTitle = c === 0
+      ? 'Phần 1: Khởi tạo và khai báo cấu trúc'
+      : isLastCodeChunk
+      ? `Phần ${c + 1}: Hoàn thiện toàn bộ logic chương trình`
+      : `Phần ${c + 1}: Mở rộng xử lý thuật toán`;
+
+    const speakerScript = c === 0
+      ? `Ở giai đoạn đầu tiên, chúng ta khai báo cấu trúc chương trình, nạp các thư viện phụ thuộc và thiết lập trạng thái khởi tạo ban đầu cho các biến dữ liệu.`
+      : isLastCodeChunk
+      ? `Ở phần hoàn thiện này, chúng ta viết tiếp các dòng lệnh cuối cùng từ dòng ${startLineIdx + 1} đến dòng ${endLineIdx}, xử lý điều kiện trả về và hoàn tất trọn vẹn toàn bộ mã nguồn.`
+      : `Tiếp tục mở rộng khối lệnh từ dòng ${startLineIdx + 1} đến ${endLineIdx}, chúng ta triển khai logic xử lý trung tâm của thuật toán và các vòng lặp tính toán.`;
+
+    scenes.push({
+      id: `user-sc-${c + 1}`,
+      type: 'editor',
+      title: sceneTitle,
+      filename,
+      language,
+      code: progressiveCode,
+      highlightLines,
+      zoomScale: 1.1,
+      focusLine: Math.max(1, startLineIdx + 1),
+      speakerScript,
+      durationInFrames: Math.max(270, newLinesCount * 45 + 135)
+    });
+  }
+
+  // Final Terminal Scene
+  scenes.push({
+    id: `user-sc-term`,
+    type: 'terminal',
+    title: 'Chạy thử nghiệm trên Terminal',
+    command: language === 'python' ? `python ${filename}` : `node ${filename}`,
+    output: `[INFO] Đang biên dịch và thực thi ${filename} (${totalLines} dòng code)...\n[SUCCESS] Toàn bộ chương trình chạy mượt mà không có lỗi runtime!\n>> Process finished with exit code 0`,
+    speakerScript: `Cuối cùng, chúng ta chạy thử nghiệm toàn bộ file trên terminal. Chương trình biên dịch và thực thi trọn vẹn với kết quả hoàn toàn chính xác.`,
+    durationInFrames: 240
+  });
 
   return {
-    title: `Demo mã nguồn ${language.toUpperCase()}`,
-    description: `Video hướng dẫn từng bước viết và thực thi code ${language}`,
+    title: `Demo mã nguồn ${language.toUpperCase()} (${totalLines} dòng)`,
+    description: `Video hướng dẫn từng bước viết và thực thi ${totalLines} dòng code ${language}`,
     aspectRatio,
     theme,
     fps: 30,
-    scenes: [
-      {
-        id: 'user-sc-1',
-        type: 'editor',
-        title: 'Phần 1: Khởi tạo và khai báo logic',
-        filename,
-        language,
-        code: part1,
-        highlightLines: [1, 2],
-        zoomScale: 1.1,
-        focusLine: 1,
-        speakerScript: `Ở phần đầu tiên, chúng ta khai báo cấu trúc hàm và thiết lập các biến điều kiện khởi tạo ban đầu để chuẩn bị cho thuật toán xử lý dữ liệu.`,
-        durationInFrames: 300
-      },
-      {
-        id: 'user-sc-2',
-        type: 'editor',
-        title: 'Phần 2: Hoàn thiện logic xử lý',
-        filename,
-        language,
-        code: part2,
-        highlightLines: [midPoint + 1, midPoint + 2],
-        zoomScale: 1.15,
-        focusLine: midPoint + 1,
-        speakerScript: `Tiếp theo, chúng ta hoàn thiện phần thân xử lý, tính toán các điều kiện logic và trả về kết quả cuối cùng của chương trình.`,
-        durationInFrames: 360
-      },
-      {
-        id: 'user-sc-3',
-        type: 'terminal',
-        title: 'Phần 3: Chạy thử trên Terminal',
-        command: language === 'python' ? `python ${filename}` : `node ${filename}`,
-        output: `[INFO] Đang chạy ${filename}...\n[SUCCESS] Chương trình chạy mượt mà, trả về kết quả chính xác.`,
-        speakerScript: 'Chạy thử nghiệm trên terminal, toàn bộ mã nguồn hoạt động chính xác và không có bất kỳ lỗi nào phát sinh.',
-        durationInFrames: 210
-      }
-    ]
+    scenes
   };
 }
 
@@ -614,4 +621,42 @@ function generateSmartOfflineDemo(
       }
     ]
   };
+}
+
+export async function generateStoryboardWithAI(
+  prompt: string,
+  apiKey?: string,
+  language: string = 'python',
+  theme: EditorTheme = 'one-dark',
+  aspectRatio: AspectRatio = '16:9'
+): Promise<Storyboard> {
+  // Check if user provided code directly
+  const trimmed = prompt.trim();
+  const isLikelyCode =
+    trimmed.includes('def ') ||
+    trimmed.includes('function ') ||
+    trimmed.includes('import ') ||
+    trimmed.includes('const ') ||
+    trimmed.includes('class ') ||
+    trimmed.includes('for ') ||
+    trimmed.includes('while ') ||
+    trimmed.includes('if ') ||
+    trimmed.split('\n').length >= 3;
+
+  if (isLikelyCode) {
+    return convertUserCodeToStoryboard(prompt, language, theme, aspectRatio);
+  }
+
+  // If API key is provided, use Gemini
+  if (apiKey && apiKey.trim()) {
+    try {
+      return await callGeminiApi(prompt, apiKey, language, theme, aspectRatio);
+    } catch (err: any) {
+      console.warn('Gemini API failed, falling back to smart templates:', err.message);
+      return generateSmartOfflineDemo(prompt, language, theme, aspectRatio);
+    }
+  }
+
+  // Fallback to Smart Templates
+  return generateSmartOfflineDemo(prompt, language, theme, aspectRatio);
 }
