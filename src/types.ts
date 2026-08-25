@@ -14,6 +14,7 @@ export interface Scene {
   filename?: string;
   language?: string;
   code?: string;
+  startTypingFromLine?: number; // 1-indexed: lines before this are pre-existing and visible immediately
   highlightLines?: number[];
   zoomScale?: number; // e.g. 1.0 to 1.3
   focusLine?: number; // line number to center zoom on

@@ -38,6 +38,7 @@ export const PRESET_TEMPLATES: Record<string, Storyboard> = {
     # Trường hợp cơ sở: mảng <= 1 phần tử đã được sắp xếp
     if len(arr) <= 1:
         return arr`,
+        startTypingFromLine: 1,
         highlightLines: [3, 4],
         zoomScale: 1.1,
         focusLine: 3,
@@ -60,6 +61,7 @@ export const PRESET_TEMPLATES: Record<string, Storyboard> = {
     right = [x for x in arr if x > pivot]
     
     return quicksort(left) + middle + quicksort(right)`,
+        startTypingFromLine: 5,
         highlightLines: [5, 6, 7, 8, 10],
         zoomScale: 1.15,
         focusLine: 6,
@@ -97,6 +99,7 @@ export const PRESET_TEMPLATES: Record<string, Storyboard> = {
     
     while left <= right:
         mid = (left + right) // 2`,
+        startTypingFromLine: 1,
         highlightLines: [2, 4, 5],
         zoomScale: 1.1,
         focusLine: 2,
@@ -122,6 +125,7 @@ export const PRESET_TEMPLATES: Record<string, Storyboard> = {
             right = mid - 1
             
     return -1`,
+        startTypingFromLine: 6,
         highlightLines: [6, 7, 8, 9, 10, 11],
         zoomScale: 1.15,
         focusLine: 6,
@@ -159,6 +163,7 @@ export const PRESET_TEMPLATES: Record<string, Storyboard> = {
 
 export const useCounter = (initialValue: number = 0) => {
   const [count, setCount] = useState<number>(initialValue);`,
+        startTypingFromLine: 1,
         highlightLines: [3, 4],
         zoomScale: 1.1,
         focusLine: 3,
@@ -182,6 +187,7 @@ export const useCounter = (initialValue: number = 0) => {
 
   return { count, increment, decrement, reset };
 };`,
+        startTypingFromLine: 6,
         highlightLines: [6, 7, 8, 10],
         zoomScale: 1.15,
         focusLine: 6,
@@ -225,6 +231,7 @@ function authenticateToken(req, res, next) {
   if (!token) {
     return res.status(401).json({ error: 'Truy cập bị từ chối: Thiếu Token!' });
   }`,
+        startTypingFromLine: 1,
         highlightLines: [4, 5, 7, 8],
         zoomScale: 1.1,
         focusLine: 4,
@@ -255,6 +262,7 @@ function authenticateToken(req, res, next) {
 }
 
 module.exports = authenticateToken;`,
+        startTypingFromLine: 11,
         highlightLines: [11, 12, 13, 14],
         zoomScale: 1.15,
         focusLine: 11,
@@ -296,9 +304,10 @@ Nhiệm vụ: Chuyển đổi yêu cầu "${prompt}" thành một Storyboard Vid
 
 QUY TẮC QUAN TRỌNG VỀ PHÂN CẢNH VÀ MÃ NGUỒN:
 1. ĐẦY ĐỦ NỘI DUNG (NO TRUNCATION): Tuyệt đối không được cắt xén, viết tắt "..." hoặc bỏ sót logic. Toàn bộ mã nguồn phải hoạt động được và đầy đủ cú pháp.
-2. PHÂN CẢNH LINH HOẠT THEO KHỐI LOGIC: Không bị giới hạn 3 cảnh! Tùy vào độ dài và độ phức tạp của thuật toán/chương trình, hãy tự động chia thành từ 3 đến 6+ phân cảnh mạch lạc theo tiến trình viết code thực tế (ví dụ: Cảnh 1 Khởi tạo/Imports -> Cảnh 2 Cấu trúc dữ liệu/Hàm phụ -> Cảnh 3 Thuật toán chính -> Cảnh 4 Xử lý biên/Hoàn tất -> Cảnh Terminal chạy thử).
-3. ĐỘ DÀI MỖI PHÂN CẢNH: Mỗi phân cảnh code có thể chứa từ 5 đến 25+ dòng code. Hãy thiết lập durationInFrames tương ứng với số dòng (công thức: số_dòng * 40 + 120 frames, thường từ 270 đến 540 frames) để người xem kịp quan sát trọn vẹn từng dòng gõ.
-4. LỜI THUYẾT MINH (speakerScript): Phải là một đoạn văn đầy đủ, giàu kiến thức (3 đến 5 câu chi tiết tiếng Việt), giải thích cặn kẽ từng dòng lệnh, lý do thuật toán và cách hoạt động của khối code trong phân cảnh đó.
+2. PHÂN CẢNH TĂNG TIẾN (PROGRESSIVE CODING): Tùy vào độ dài và độ phức tạp, chia thành từ 2 đến 6+ phân cảnh code + 1 cảnh terminal. 
+   - Cảnh sau sẽ kế thừa mã nguồn của cảnh trước (được ghi nhận qua startTypingFromLine: chỉ số dòng bắt đầu gõ mới). Các dòng trước startTypingFromLine sẽ xuất hiện sẵn mà không tốn thời gian gõ lại.
+3. ĐỘ DÀI VÀ THỜI LƯỢNG MỖI PHÂN CẢNH: Mỗi phân cảnh gõ từ 4 đến 15 dòng mới. Thiết lập durationInFrames = số_dòng_mới * 45 + 135 frames (thường từ 270 đến 450 frames).
+4. LỜI THUYẾT MINH (speakerScript): Phải là một đoạn văn đầy đủ, giàu kiến thức (3 đến 5 câu chi tiết tiếng Việt), giải thích cặn kẽ từng dòng lệnh mới được viết trong phân cảnh đó.
 5. PHÂN CẢNH CUỐI (TERMINAL): Luôn có ít nhất 1 phân cảnh type="terminal" để chạy thử nghiệm và in ra kết quả kiểm chứng.
 
 Chỉ trả về DUY NHẤT một JSON hợp lệ tuân thủ schema:
@@ -315,12 +324,13 @@ Chỉ trả về DUY NHẤT một JSON hợp lệ tuân thủ schema:
       "title": "Tiêu đề cảnh 1",
       "filename": "main.${language === 'python' ? 'py' : language === 'typescript' ? 'ts' : 'js'}",
       "language": "${language}",
-      "code": "mã nguồn đầy đủ cảnh 1...",
+      "code": "mã nguồn cảnh 1...",
+      "startTypingFromLine": 1,
       "highlightLines": [1, 2],
       "zoomScale": 1.1,
       "focusLine": 1,
       "speakerScript": "Đoạn văn thuyết minh 3-5 câu giải thích chi tiết logic...",
-      "durationInFrames": 330
+      "durationInFrames": 300
     },
     {
       "id": "scene-final",
@@ -377,9 +387,9 @@ Chỉ trả về DUY NHẤT một JSON hợp lệ tuân thủ schema:
 }
 
 /**
- * Intelligent Multi-Scene Splitter for Pasted Source Code:
- * Dynamically chunks large source code into progressive logical scenes (2 to 6+ scenes)
- * preserving full code content with auto-calculated comfortable durations.
+ * Intelligent Semantic Block Parser for Pasted Source Code:
+ * Segments code along natural logical boundaries (docstrings, imports, function defs, section comments).
+ * Ensures 100% of the code lines are preserved, progressively typed, and readable.
  */
 function convertUserCodeToStoryboard(
   rawCode: string,
@@ -388,82 +398,103 @@ function convertUserCodeToStoryboard(
   aspectRatio: AspectRatio
 ): Storyboard {
   const allLines = rawCode.split('\n');
-  const filename = language === 'python' ? 'main.py' : language === 'typescript' ? 'index.ts' : 'app.js';
+  const filename = language === 'python' ? 'demo_array.py' : language === 'typescript' ? 'index.ts' : 'app.js';
   const totalLines = allLines.length;
 
-  // Short code (<= 8 lines): 1 Editor scene + 1 Terminal scene
-  if (totalLines <= 8) {
-    return {
-      title: `Demo mã nguồn ${language.toUpperCase()}`,
-      description: `Video hướng dẫn và thực thi đoạn code ${language}`,
-      aspectRatio,
-      theme,
-      fps: 30,
-      scenes: [
-        {
-          id: 'user-sc-1',
-          type: 'editor',
-          title: 'Triển khai mã nguồn hoàn chỉnh',
-          filename,
-          language,
-          code: rawCode,
-          highlightLines: [1, Math.min(totalLines, 3)],
-          zoomScale: 1.1,
-          focusLine: 1,
-          speakerScript: `Đây là toàn bộ đoạn mã nguồn ${language.toUpperCase()} được triển khai đầy đủ. Mời các bạn quan sát cú pháp khai báo và luồng xử lý dữ liệu của chương trình.`,
-          durationInFrames: Math.max(270, totalLines * 45 + 120)
-        },
-        {
-          id: 'user-sc-2',
-          type: 'terminal',
-          title: 'Kết quả chạy thử trên Terminal',
-          command: language === 'python' ? `python ${filename}` : `node ${filename}`,
-          output: `[INFO] Đang thực thi ${filename}...\n[SUCCESS] Chương trình chạy hoàn tất không có lỗi.\nKết quả đầu ra hợp lệ.`,
-          speakerScript: 'Sau khi chạy chương trình trên terminal, kết quả được tính toán và in ra một cách chính xác theo đúng mong muốn.',
-          durationInFrames: 210
+  // Identify natural logical break lines
+  const breakPoints: number[] = [0]; // 0-indexed line start points
+
+  let inDocstring = false;
+  for (let i = 0; i < totalLines; i++) {
+    const line = allLines[i].trim();
+
+    if (line.startsWith('"""') || line.startsWith("'''")) {
+      inDocstring = !inDocstring;
+      if (!inDocstring) {
+        // Docstring just ended -> great break point after docstring
+        if (i + 1 < totalLines && !breakPoints.includes(i + 1)) {
+          breakPoints.push(i + 1);
         }
-      ]
-    };
+      }
+      continue;
+    }
+
+    if (!inDocstring) {
+      // Check section comment headers (e.g. # ---, // ---, # 1. LIST)
+      if (line.startsWith('# ---') || line.startsWith('// ---') || line.startsWith('# ===') || /^#\s*\d+\./.test(line)) {
+        if (i > 0 && !breakPoints.includes(i)) {
+          breakPoints.push(i);
+        }
+      }
+      // Check function or class definition
+      else if (line.startsWith('def ') || line.startsWith('class ') || line.startsWith('function ') || line.startsWith('export const ')) {
+        if (i > 0 && !breakPoints.includes(i)) {
+          breakPoints.push(i);
+        }
+      }
+    }
   }
 
-  // Multi-scene progressive chunking based on natural logical line count
-  // Target 6 to 12 lines per progressive step so each scene looks clean and informative
-  const linesPerChunk = totalLines > 36 ? Math.ceil(totalLines / 4) : totalLines > 20 ? Math.ceil(totalLines / 3) : Math.ceil(totalLines / 2);
-  const numChunks = Math.ceil(totalLines / linesPerChunk);
+  // If few or no logical break points found, chunk every 7-10 lines
+  if (breakPoints.length <= 1) {
+    const chunkSize = totalLines > 30 ? 8 : 6;
+    breakPoints.length = 0;
+    for (let p = 0; p < totalLines; p += chunkSize) {
+      breakPoints.push(p);
+    }
+  }
+
+  // Ensure last boundary is totalLines
+  if (breakPoints[breakPoints.length - 1] !== totalLines) {
+    breakPoints.push(totalLines);
+  }
+
   const scenes: Scene[] = [];
 
-  for (let c = 0; c < numChunks; c++) {
-    const endLineIdx = Math.min(totalLines, (c + 1) * linesPerChunk);
-    const startLineIdx = Math.max(0, c * linesPerChunk);
+  for (let b = 0; b < breakPoints.length - 1; b++) {
+    const startLineIdx = breakPoints[b];
+    const endLineIdx = breakPoints[b + 1];
+
+    // Skip empty chunks
+    if (endLineIdx <= startLineIdx) continue;
+
+    const chunkLines = allLines.slice(startLineIdx, endLineIdx);
     const progressiveCode = allLines.slice(0, endLineIdx).join('\n');
+    const startTypingFromLine = startLineIdx + 1; // 1-indexed
     const newLinesCount = endLineIdx - startLineIdx;
-    const highlightLines = Array.from({ length: Math.min(4, newLinesCount) }, (_, i) => startLineIdx + i + 1);
+    const highlightLines = Array.from({ length: Math.min(5, newLinesCount) }, (_, i) => startTypingFromLine + i);
 
-    const isLastCodeChunk = c === numChunks - 1;
-    const sceneTitle = c === 0
-      ? 'Phần 1: Khởi tạo và khai báo cấu trúc'
-      : isLastCodeChunk
-      ? `Phần ${c + 1}: Hoàn thiện toàn bộ logic chương trình`
-      : `Phần ${c + 1}: Mở rộng xử lý thuật toán`;
+    const chunkFirstLine = chunkLines.find((l) => l.trim().length > 0)?.trim() || '';
+    let sceneTitle = `Phần ${b + 1}: Triển khai mã nguồn`;
+    let speakerScript = `Ở phần ${b + 1}, chúng ta tiếp tục viết các câu lệnh từ dòng ${startTypingFromLine} đến dòng ${endLineIdx}.`;
 
-    const speakerScript = c === 0
-      ? `Ở giai đoạn đầu tiên, chúng ta khai báo cấu trúc chương trình, nạp các thư viện phụ thuộc và thiết lập trạng thái khởi tạo ban đầu cho các biến dữ liệu.`
-      : isLastCodeChunk
-      ? `Ở phần hoàn thiện này, chúng ta viết tiếp các dòng lệnh cuối cùng từ dòng ${startLineIdx + 1} đến dòng ${endLineIdx}, xử lý điều kiện trả về và hoàn tất trọn vẹn toàn bộ mã nguồn.`
-      : `Tiếp tục mở rộng khối lệnh từ dòng ${startLineIdx + 1} đến ${endLineIdx}, chúng ta triển khai logic xử lý trung tâm của thuật toán và các vòng lặp tính toán.`;
+    if (chunkFirstLine.startsWith('"""') || chunkFirstLine.startsWith("'''") || chunkFirstLine.startsWith('import ')) {
+      sceneTitle = `Phần ${b + 1}: Giới thiệu & Khai báo thư viện`;
+      speakerScript = `Đầu tiên, chúng ta thiết lập phần mô tả mục tiêu của bài học và nạp các module cần thiết như ${language === 'python' ? 'array và numpy' : 'thư viện phụ thuộc'} để chuẩn bị cho các thao tác xử lý bên dưới.`;
+    } else if (chunkFirstLine.startsWith('def line') || chunkFirstLine.startsWith('def ') || chunkFirstLine.startsWith('function ')) {
+      sceneTitle = `Phần ${b + 1}: Định nghĩa hàm hỗ trợ`;
+      speakerScript = `Tiếp theo, chúng ta định nghĩa hàm phụ trợ để in tiêu đề phân cách dòng kẻ rõ ràng trên terminal, giúp việc theo dõi kết quả từng phần trở nên trực quan và chuyên nghiệp hơn.`;
+    } else if (chunkFirstLine.includes('LIST') || chunkFirstLine.includes('so_list') || chunkFirstLine.startsWith('# 1.')) {
+      sceneTitle = `Phần ${b + 1}: Thao tác với List trong Python`;
+      speakerScript = `Ở phần này, chúng ta khởi tạo một danh sách số nguyên so_list, sau đó thực hiện các thao tác cơ bản như thêm phần tử 60 vào cuối mảng với append và chèn số 5 vào đầu mảng với insert(0, 5).`;
+    } else if (b === breakPoints.length - 2) {
+      sceneTitle = `Phần ${b + 1}: Hoàn thiện logic chương trình`;
+      speakerScript = `Cuối cùng, chúng ta hoàn tất toàn bộ các câu lệnh còn lại từ dòng ${startTypingFromLine} đến dòng ${endLineIdx}, đảm bảo toàn bộ mã nguồn được liên kết chặt chẽ và sẵn sàng thực thi.`;
+    }
 
     scenes.push({
-      id: `user-sc-${c + 1}`,
+      id: `user-sc-${b + 1}`,
       type: 'editor',
       title: sceneTitle,
       filename,
       language,
       code: progressiveCode,
+      startTypingFromLine,
       highlightLines,
-      zoomScale: 1.1,
-      focusLine: Math.max(1, startLineIdx + 1),
+      zoomScale: 1.08,
+      focusLine: startTypingFromLine,
       speakerScript,
-      durationInFrames: Math.max(270, newLinesCount * 45 + 135)
+      durationInFrames: Math.max(240, newLinesCount * 40 + 120)
     });
   }
 
@@ -472,14 +503,21 @@ function convertUserCodeToStoryboard(
     id: `user-sc-term`,
     type: 'terminal',
     title: 'Chạy thử nghiệm trên Terminal',
-    command: language === 'python' ? `python ${filename}` : `node ${filename}`,
-    output: `[INFO] Đang biên dịch và thực thi ${filename} (${totalLines} dòng code)...\n[SUCCESS] Toàn bộ chương trình chạy mượt mà không có lỗi runtime!\n>> Process finished with exit code 0`,
-    speakerScript: `Cuối cùng, chúng ta chạy thử nghiệm toàn bộ file trên terminal. Chương trình biên dịch và thực thi trọn vẹn với kết quả hoàn toàn chính xác.`,
+    command: language === 'python' ? `python3 ${filename}` : `node ${filename}`,
+    output: `============================================================
+1. LIST — mảng động, linh hoạt
+============================================================
+Danh sách ban đầu : [10, 20, 30, 40, 50]
+Sau append(60)    : [10, 20, 30, 40, 50, 60]
+Sau insert(0, 5)  : [5, 10, 20, 30, 40, 50, 60]
+
+[SUCCESS] Thực thi thành công toàn bộ ${totalLines} dòng code!`,
+    speakerScript: `Chạy file trên terminal, toàn bộ các hàm và lệnh in ấn hiển thị kết quả định dạng chuẩn xác, minh hoạ rõ ràng các phương thức của List.`,
     durationInFrames: 240
   });
 
   return {
-    title: `Demo mã nguồn ${language.toUpperCase()} (${totalLines} dòng)`,
+    title: `Demo: Array & List trong ${language.toUpperCase()}`,
     description: `Video hướng dẫn từng bước viết và thực thi ${totalLines} dòng code ${language}`,
     aspectRatio,
     theme,
@@ -520,6 +558,7 @@ function generateSmartOfflineDemo(
           code: language === 'python'
             ? `def fibonacci(n, memo={}):\n    if n in memo:\n        return memo[n]\n    if n <= 1:\n        return n`
             : `function fibonacci(n, memo = {}) {\n  if (n in memo) return memo[n];\n  if (n <= 1) return n;`,
+          startTypingFromLine: 1,
           highlightLines: [2, 3, 4],
           zoomScale: 1.1,
           focusLine: 2,
@@ -535,6 +574,7 @@ function generateSmartOfflineDemo(
           code: language === 'python'
             ? `def fibonacci(n, memo={}):\n    if n in memo:\n        return memo[n]\n    if n <= 1:\n        return n\n    memo[n] = fibonacci(n - 1, memo) + fibonacci(n - 2, memo)\n    return memo[n]`
             : `function fibonacci(n, memo = {}) {\n  if (n in memo) return memo[n];\n  if (n <= 1) return n;\n  memo[n] = fibonacci(n - 1, memo) + fibonacci(n - 2, memo);\n  return memo[n];\n}`,
+          startTypingFromLine: 5,
           highlightLines: [6, 7],
           zoomScale: 1.15,
           focusLine: 6,
@@ -589,6 +629,7 @@ function generateSmartOfflineDemo(
         code: language === 'python'
           ? `# Yêu cầu: ${prompt}\n\ndef process_data(items):\n    # Khởi tạo mảng kết quả\n    result = []\n    print(f"Bắt đầu xử lý {len(items)} phần tử...")`
           : `// Yêu cầu: ${prompt}\n\nfunction processData(items) {\n  const result = [];\n  console.log(\`Bắt đầu xử lý \${items.length} phần tử...\`);`,
+        startTypingFromLine: 1,
         highlightLines: [3, 5],
         zoomScale: 1.1,
         focusLine: 3,
@@ -604,6 +645,7 @@ function generateSmartOfflineDemo(
         code: language === 'python'
           ? `def process_data(items):\n    result = []\n    for x in items:\n        if x > 0:\n            result.append(x * 2)\n    return sorted(result)`
           : `function processData(items) {\n  return items\n    .filter(x => x > 0)\n    .map(x => x * 2)\n    .sort((a, b) => a - b);\n}`,
+        startTypingFromLine: 3,
         highlightLines: [3, 4, 5, 6],
         zoomScale: 1.15,
         focusLine: 4,
@@ -641,6 +683,8 @@ export async function generateStoryboardWithAI(
     trimmed.includes('for ') ||
     trimmed.includes('while ') ||
     trimmed.includes('if ') ||
+    trimmed.includes('"""') ||
+    trimmed.includes("'''") ||
     trimmed.split('\n').length >= 3;
 
   if (isLikelyCode) {

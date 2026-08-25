@@ -47,6 +47,7 @@ const SceneItem: React.FC<{
               code={scene.code || ''}
               language={scene.language || 'python'}
               theme={theme}
+              startTypingFromLine={scene.startTypingFromLine}
               highlightLines={scene.highlightLines}
               zoomScale={scene.zoomScale || 1.05}
               focusLine={scene.focusLine || 1}
