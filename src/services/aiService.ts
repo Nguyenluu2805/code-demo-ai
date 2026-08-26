@@ -44,10 +44,10 @@ export async function validateGeminiApiKey(
       const usable = data.models
         .filter((m: any) => m.supportedGenerationMethods?.includes('generateContent'))
         .map((m: any) => m.name.replace(/^models\//, ''));
-      const activeModel = usable.find((m: string) => m.includes('flash')) || usable[0] || 'gemini-1.5-flash';
+      const activeModel = usable.find((m: string) => m.includes('3.6') || m.includes('flash')) || usable[0] || 'gemini-3.6-flash';
       return { valid: true, model: activeModel };
     }
-    return { valid: true, model: 'gemini-1.5-flash' };
+    return { valid: true, model: 'gemini-3.6-flash' };
   } catch (err: any) {
     return { valid: false, error: err.message || 'Không thể kết nối đến Google AI Studio. Vui lòng kiểm tra mạng.' };
   }
@@ -432,7 +432,7 @@ Chỉ trả về DUY NHẤT một JSON hợp lệ tuân thủ schema:
 }`;
 
   const cleanKey = apiKey.trim();
-  const models = ['gemini-1.5-flash', 'gemini-2.0-flash'];
+  const models = ['gemini-3.6-flash', 'gemini-1.5-flash'];
   let lastErrorMsg = '';
 
   for (const model of models) {
