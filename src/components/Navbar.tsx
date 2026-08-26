@@ -1,16 +1,12 @@
 import React from 'react';
-import { VideoCameraIcon, KeyIcon, DownloadIcon, SparklesIcon } from './Icons';
+import { VideoCameraIcon, DownloadIcon } from './Icons';
 
 interface NavbarProps {
-  onOpenApiKeyModal: () => void;
   onOpenExportModal: () => void;
-  hasApiKey: boolean;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
-  onOpenApiKeyModal,
-  onOpenExportModal,
-  hasApiKey
+  onOpenExportModal
 }) => {
   return (
     <header className="border-b border-zinc-800/80 bg-zinc-950/70 backdrop-blur-xl sticky top-0 z-40">
@@ -37,24 +33,10 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Action Controls */}
         <div className="flex items-center gap-2.5">
-          {/* API Key Status / Config */}
-          <button
-            onClick={onOpenApiKeyModal}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium border transition-all cursor-pointer ${
-              hasApiKey
-                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 shadow-sm'
-                : 'bg-zinc-900/90 border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-800/80'
-            }`}
-          >
-            <span className={`w-2 h-2 rounded-full ${hasApiKey ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-500'}`} />
-            <KeyIcon className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">{hasApiKey ? 'Gemini AI Live' : 'API Key'}</span>
-          </button>
-
           {/* Export Video Button */}
           <button
             onClick={onOpenExportModal}
-            className="flex items-center gap-2 px-4 py-1.5 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/25 transition-all active:scale-95 cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/25 transition-all active:scale-95 cursor-pointer"
           >
             <DownloadIcon className="w-3.5 h-3.5" />
             <span>Xuất Video & Kịch bản</span>

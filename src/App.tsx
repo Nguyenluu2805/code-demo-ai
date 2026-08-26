@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Navbar } from './components/Navbar';
 import { PromptInput } from './components/PromptInput';
 import { PlayerView } from './components/PlayerView';
 import { TimelineEditor } from './components/TimelineEditor';
 import { ExportModal } from './components/ExportModal';
-import { ApiKeyModal } from './components/ApiKeyModal';
 import { Storyboard, EditorTheme, AspectRatio, SpeedMode } from './types';
 import { PRESET_TEMPLATES, generateStoryboardWithAI } from './services/aiService';
 import { CheckIcon, SparklesIcon, CloseIcon } from './components/Icons';
@@ -12,30 +11,19 @@ import { CheckIcon, SparklesIcon, CloseIcon } from './components/Icons';
 export function App() {
   const [storyboard, setStoryboard] = useState<Storyboard>(PRESET_TEMPLATES['quicksort-python']);
   const [speedMode, setSpeedMode] = useState<SpeedMode>('normal');
-  const [apiKey, setApiKey] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showSubtitles, setShowSubtitles] = useState<boolean>(true);
-  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState<boolean>(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'info' | 'error' } | null>(null);
 
-  // Load API key from localStorage on mount
-  useEffect(() => {
-    const savedKey = localStorage.getItem('GEMINI_API_KEY') || '';
-    setApiKey(savedKey);
-  }, []);
+  // Read Gemini API Key from environment variable
+  const apiKey = (import.meta.env.VITE_GEMINI_API_KEY as string) || '';
 
   const showToast = (text: string, type: 'success' | 'info' | 'error' = 'success') => {
     setToastMessage({ text, type });
     setTimeout(() => {
       setToastMessage(null);
     }, 3500);
-  };
-
-  const handleSaveApiKey = (key: string) => {
-    setApiKey(key);
-    localStorage.setItem('GEMINI_API_KEY', key);
-    showToast(key ? 'Đã lưu Gemini API Key thành công' : 'Đã xóa API Key (chuyển về Smart Offline)');
   };
 
   const handleSpeedModeChange = (newSpeed: SpeedMode) => {
@@ -137,9 +125,7 @@ export function App() {
 
       {/* Top Navbar */}
       <Navbar
-        onOpenApiKeyModal={() => setIsApiKeyModalOpen(true)}
         onOpenExportModal={() => setIsExportModalOpen(true)}
-        hasApiKey={Boolean(apiKey && apiKey.trim())}
       />
 
       {/* Floating Notification Toast */}
@@ -175,7 +161,6 @@ export function App() {
           onThemeChange={handleThemeChange}
           onAspectRatioChange={handleAspectRatioChange}
           onSpeedModeChange={handleSpeedModeChange}
-          hasApiKey={Boolean(apiKey && apiKey.trim())}
         />
 
         {/* Row 2: Grid with Live Player and Timeline Scene Editor */}
@@ -200,13 +185,6 @@ export function App() {
       </main>
 
       {/* Modals */}
-      <ApiKeyModal
-        isOpen={isApiKeyModalOpen}
-        onClose={() => setIsApiKeyModalOpen(false)}
-        apiKey={apiKey}
-        onSaveKey={handleSaveApiKey}
-      />
-
       <ExportModal
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}

@@ -13,7 +13,6 @@ interface PromptInputProps {
   onThemeChange: (theme: EditorTheme) => void;
   onAspectRatioChange: (ratio: AspectRatio) => void;
   onSpeedModeChange: (speed: SpeedMode) => void;
-  hasApiKey: boolean;
 }
 
 export const PromptInput: React.FC<PromptInputProps> = ({
@@ -25,8 +24,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
   currentSpeedMode,
   onThemeChange,
   onAspectRatioChange,
-  onSpeedModeChange,
-  hasApiKey
+  onSpeedModeChange
 }) => {
   const [inputMode, setInputMode] = useState<'prompt' | 'code'>('prompt');
   const [inputText, setInputText] = useState('');
@@ -82,12 +80,6 @@ export const PromptInput: React.FC<PromptInputProps> = ({
             <CodeBracketIcon className="w-3.5 h-3.5 text-violet-400" />
             <span>Dán Mã Nguồn có sẵn</span>
           </button>
-        </div>
-
-        {/* Status Indicator */}
-        <div className="text-[11px] text-zinc-400 font-mono flex items-center gap-2 bg-zinc-950/60 px-3 py-1.5 rounded-lg border border-zinc-800/60">
-          <span className={`w-1.5 h-1.5 rounded-full ${hasApiKey ? 'bg-emerald-400' : 'bg-indigo-400'}`} />
-          <span>{hasApiKey ? 'Engine: Gemini 1.5 Flash' : 'Engine: Smart Offline'}</span>
         </div>
       </div>
 
