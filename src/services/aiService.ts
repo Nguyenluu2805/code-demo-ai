@@ -432,101 +432,90 @@ Chỉ trả về DUY NHẤT một JSON hợp lệ tuân thủ schema:
 }`;
 
   const cleanKey = apiKey.trim();
-  let availableModelNames: string[] = [];
-
-  // 1. Dynamic Model Discovery: Query Google ModelService for this specific key
-  try {
-    const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${cleanKey}`);
-    if (listRes.ok) {
-      const listData = await listRes.json();
-      if (Array.isArray(listData.models)) {
-        availableModelNames = listData.models
-          .filter((m: any) => m.supportedGenerationMethods?.includes('generateContent'))
-          .map((m: any) => m.name.replace(/^models\//, ''));
-      }
-    } else {
-      const errData = await listRes.json().catch(() => ({}));
-      if (listRes.status === 400 || listRes.status === 403) {
-        throw new Error(errData.error?.message || 'API Key không hợp lệ hoặc không có quyền truy cập Google AI Studio');
-      }
-    }
-  } catch (err: any) {
-    if (err.message && (err.message.includes('API key') || err.message.includes('PERMISSION_DENIED') || err.message.includes('API Key'))) {
-      throw err;
-    }
-  }
-
-  // 2. Select optimal target models
-  const preferred = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-pro', 'gemini-1.0-pro'];
-  const targetModels: string[] = [];
-
-  for (const pref of preferred) {
-    if (availableModelNames.includes(pref) && !targetModels.includes(pref)) {
-      targetModels.push(pref);
-    }
-  }
-  for (const found of availableModelNames) {
-    if (!targetModels.includes(found)) targetModels.push(found);
-  }
-  if (targetModels.length === 0) {
-    targetModels.push('gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-pro');
-  }
-
-  // 3. Try candidate endpoints across v1beta and v1
+  const models = ['gemini-1.5-flash', 'gemini-2.0-flash'];
   let lastErrorMsg = '';
-  for (const model of targetModels) {
-    for (const version of ['v1beta', 'v1']) {
-      try {
-        const url = `https://generativelanguage.googleapis.com/${version}/models/${model}:generateContent?key=${cleanKey}`;
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  {
-                    text: `${systemPrompt}\n\nYêu cầu tạo video: ${prompt}`
-                  }
-                ]
-              }
-            ],
-            generationConfig: {
-              temperature: 0.2,
-              responseMimeType: version === 'v1beta' ? 'application/json' : undefined
+
+  for (const model of models) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${cleanKey}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: `${systemPrompt}\n\nYêu cầu tạo video: ${prompt}`
+                }
+              ]
             }
-          })
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          lastErrorMsg = errorData.error?.message || `HTTP ${response.status}`;
-          if (response.status === 400 && lastErrorMsg.includes('API key')) {
-            throw new Error(lastErrorMsg);
+          ],
+          generationConfig: {
+            temperature: 0.2,
+            responseMimeType: 'application/json'
           }
-          continue;
+        })
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const message = errorData.error?.message || `HTTP ${response.status} lỗi kết nối`;
+
+        // Direct authentication or quota errors -> throw immediately
+        if (
+          response.status === 400 ||
+          response.status === 403 ||
+          response.status === 429 ||
+          message.includes('API key') ||
+          message.includes('leaked') ||
+          message.includes('Quota')
+        ) {
+          throw new Error(message);
         }
 
-        const data = await response.json();
-        const textContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!textContent) continue;
+        lastErrorMsg = message;
+        continue;
+      }
 
-        const storyboard = cleanAndParseJson<Storyboard>(textContent);
-        storyboard.theme = theme;
-        storyboard.aspectRatio = aspectRatio;
-        storyboard.fps = 30;
+      const data = await response.json();
+      const textContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!textContent) {
+        lastErrorMsg = 'Gemini API không phản hồi dữ liệu văn bản';
+        continue;
+      }
 
-        return storyboard;
-      } catch (e: any) {
-        if (e.message && (e.message.includes('API key') || e.message.includes('PERMISSION_DENIED'))) {
-          throw e;
-        }
-        lastErrorMsg = e.message || 'Lỗi kết nối';
+      const storyboard = cleanAndParseJson<Storyboard>(textContent);
+      storyboard.theme = theme;
+      storyboard.aspectRatio = aspectRatio;
+      storyboard.fps = 30;
+
+      return storyboard;
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      if (err.name === 'AbortError') {
+        lastErrorMsg = 'Yêu cầu tới Google AI Studio quá thời gian chờ (Timeout 15s). Vui lòng thử lại.';
+      } else if (
+        err.message &&
+        (err.message.includes('API key') ||
+          err.message.includes('leaked') ||
+          err.message.includes('Quota') ||
+          err.message.includes('PERMISSION_DENIED'))
+      ) {
+        throw err;
+      } else {
+        lastErrorMsg = err.message || 'Lỗi kết nối tới Google AI';
       }
     }
   }
 
-  throw new Error(lastErrorMsg || 'Không thể kết nối đến bất kỳ mô hình Gemini AI nào. Vui lòng kiểm tra lại API Key');
+  throw new Error(lastErrorMsg || 'Không thể tạo kịch bản từ Gemini AI. Vui lòng kiểm tra lại API Key');
 }
 
 /**
