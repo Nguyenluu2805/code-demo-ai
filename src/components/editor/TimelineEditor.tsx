@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Scene, Storyboard } from '../types';
-import { LayersIcon, PlusIcon, TrashIcon, CodeBracketIcon, TerminalIcon, MessageQuoteIcon, FileDocIcon, MicIcon, ClockIcon } from './Icons';
-import { FileIcon } from '../remotion/components/FileIcon';
+import { Scene, Storyboard } from '../../types';
+import { LayersIcon, PlusIcon, TrashIcon, CodeBracketIcon, TerminalIcon, MessageQuoteIcon, FileDocIcon, MicIcon, ClockIcon } from '../common/Icons';
+import { FileIcon } from '../../remotion/components/FileIcon';
 
 interface TimelineEditorProps {
   storyboard: Storyboard;

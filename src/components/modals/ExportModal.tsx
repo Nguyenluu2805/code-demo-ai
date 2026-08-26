@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Storyboard } from '../types';
-import { generateSrtContent, generateMarkdownScript, downloadFile } from '../services/exportService';
-import { SparklesIcon, FileDocIcon, SubtitlesIcon, CodeBracketIcon, TerminalIcon, CopyIcon, CheckIcon, CloseIcon, VideoCameraIcon, DownloadIcon } from './Icons';
+import { Storyboard } from '../../types';
+import { generateSrtContent, generateMarkdownScript, downloadFile } from '../../services/exportService';
+import { SparklesIcon, FileDocIcon, SubtitlesIcon, CodeBracketIcon, TerminalIcon, CopyIcon, CheckIcon, CloseIcon, VideoCameraIcon, DownloadIcon } from '../common/Icons';
 
 interface ExportModalProps {
   isOpen: boolean;

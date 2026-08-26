@@ -1,7 +1,8 @@
 {
-  "name": "code-demo-ai",
+  "name": "scriptcode-studio",
   "private": true,
-  "version": "1.0.0",
+  "version": "2.0.0",
+  "description": "ScriptCode Studio: Next-Gen AI Code Video & Presentation Studio",
   "type": "module",
   "scripts": {
     "dev": "vite",

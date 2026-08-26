@@ -1,52 +1,37 @@
 import React, { useState } from 'react';
-import { Navbar } from './components/Navbar';
-import { PromptInput } from './components/PromptInput';
-import { PlayerView } from './components/PlayerView';
-import { TimelineEditor } from './components/TimelineEditor';
-import { ExportModal } from './components/ExportModal';
-import { Storyboard, EditorTheme, AspectRatio, SpeedMode } from './types';
-import { PRESET_TEMPLATES, generateStoryboardWithAI } from './services/aiService';
-import { CheckIcon, SparklesIcon, CloseIcon } from './components/Icons';
+import { Navbar } from './components/layout/Navbar';
+import { Footer } from './components/layout/Footer';
+import { PromptInput } from './components/editor/PromptInput';
+import { PlayerView } from './components/player/PlayerView';
+import { TimelineEditor } from './components/editor/TimelineEditor';
+import { ExportModal } from './components/modals/ExportModal';
+import { Toast } from './components/common/Toast';
+import { EditorTheme, AspectRatio, SpeedMode } from './types';
+import { generateStoryboardWithAI } from './services/aiService';
+import { useStoryboard } from './hooks/useStoryboard';
+import { useToast } from './hooks/useToast';
 
 export function App() {
-  const [storyboard, setStoryboard] = useState<Storyboard>(PRESET_TEMPLATES['quicksort-python']);
-  const [speedMode, setSpeedMode] = useState<SpeedMode>('normal');
+  const {
+    storyboard,
+    setStoryboard,
+    speedMode,
+    updateSpeedMode,
+    updateTheme,
+    updateAspectRatio,
+    loadPreset
+  } = useStoryboard();
+
+  const { toastMessage, showToast } = useToast();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showSubtitles, setShowSubtitles] = useState<boolean>(true);
   const [isExportModalOpen, setIsExportModalOpen] = useState<boolean>(false);
-  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'info' | 'error' } | null>(null);
 
   // Read Gemini API Key from environment variable
   const apiKey = (import.meta.env.VITE_GEMINI_API_KEY as string) || '';
 
-  const showToast = (text: string, type: 'success' | 'info' | 'error' = 'success') => {
-    setToastMessage({ text, type });
-    setTimeout(() => {
-      setToastMessage(null);
-    }, 3500);
-  };
-
   const handleSpeedModeChange = (newSpeed: SpeedMode) => {
-    setSpeedMode(newSpeed);
-    const speedMultipliers: Record<SpeedMode, number> = {
-      slow: 1.6,
-      relaxed: 1.25,
-      normal: 1.0,
-      fast: 0.7
-    };
-
-    const factor = speedMultipliers[newSpeed] / (speedMultipliers[speedMode] || 1.0);
-    const updatedScenes = storyboard.scenes.map((sc) => ({
-      ...sc,
-      durationInFrames: Math.max(120, Math.round(sc.durationInFrames * factor))
-    }));
-
-    setStoryboard((prev) => ({
-      ...prev,
-      speedMode: newSpeed,
-      scenes: updatedScenes
-    }));
-
+    updateSpeedMode(newSpeed);
     const labelMap: Record<SpeedMode, string> = {
       slow: 'Chậm (0.5x)',
       relaxed: 'Chậm vừa (0.75x)',
@@ -64,8 +49,14 @@ export function App() {
   ) => {
     setIsLoading(true);
     try {
-      const { storyboard: generated, source } = await generateStoryboardWithAI(prompt, apiKey, language, theme, aspectRatio);
-      
+      const { storyboard: generated, source } = await generateStoryboardWithAI(
+        prompt,
+        apiKey,
+        language,
+        theme,
+        aspectRatio
+      );
+
       if (speedMode === 'slow') {
         generated.scenes = generated.scenes.map((s) => ({
           ...s,
@@ -96,57 +87,34 @@ export function App() {
   };
 
   const handleSelectPreset = (presetKey: string) => {
-    if (PRESET_TEMPLATES[presetKey]) {
-      const preset = { ...PRESET_TEMPLATES[presetKey] };
-      if (speedMode === 'slow') {
-        preset.scenes = preset.scenes.map((s) => ({ ...s, durationInFrames: Math.round(s.durationInFrames * 1.5) }));
-      }
-      setStoryboard(preset);
-      showToast(`Đã tải kịch bản: ${preset.title}`, 'info');
+    const loaded = loadPreset(presetKey);
+    if (loaded) {
+      showToast(`Đã tải kịch bản: ${loaded.title}`, 'info');
     }
   };
 
   const handleThemeChange = (theme: EditorTheme) => {
-    setStoryboard((prev) => ({ ...prev, theme }));
+    updateTheme(theme);
     showToast(`Đã áp dụng theme: ${theme}`, 'info');
   };
 
   const handleAspectRatioChange = (aspectRatio: AspectRatio) => {
-    setStoryboard((prev) => ({ ...prev, aspectRatio }));
+    updateAspectRatio(aspectRatio);
     showToast(`Đã chuyển tỉ lệ: ${aspectRatio}`, 'info');
   };
 
   return (
-    <div className="min-h-screen bg-[#090d16] text-zinc-100 flex flex-col selection:bg-indigo-500 selection:text-white">
-      {/* Ambient background glow */}
+    <div className="min-h-screen bg-[#080c14] text-zinc-100 flex flex-col selection:bg-indigo-500 selection:text-white">
+      {/* Ambient Cyber Light Effect */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-gradient-to-b from-indigo-500/10 via-violet-500/5 to-transparent blur-3xl opacity-60" />
       </div>
 
       {/* Top Navbar */}
-      <Navbar
-        onOpenExportModal={() => setIsExportModalOpen(true)}
-      />
+      <Navbar onOpenExportModal={() => setIsExportModalOpen(true)} />
 
       {/* Floating Notification Toast */}
-      {toastMessage && (
-        <div className="fixed top-20 right-6 z-50 animate-bounce-short">
-          <div
-            className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl border shadow-2xl text-xs font-medium backdrop-blur-md ${
-              toastMessage.type === 'success'
-                ? 'bg-emerald-950/90 border-emerald-500/50 text-emerald-200'
-                : toastMessage.type === 'error'
-                ? 'bg-rose-950/90 border-rose-500/50 text-rose-200'
-                : 'bg-zinc-900/90 border-zinc-700/80 text-zinc-200'
-            }`}
-          >
-            {toastMessage.type === 'success' && <CheckIcon className="w-4 h-4 text-emerald-400" />}
-            {toastMessage.type === 'error' && <CloseIcon className="w-4 h-4 text-rose-400" />}
-            {toastMessage.type === 'info' && <SparklesIcon className="w-4 h-4 text-indigo-400" />}
-            <span>{toastMessage.text}</span>
-          </div>
-        </div>
-      )}
+      <Toast message={toastMessage} />
 
       {/* Main Content Dashboard */}
       <main className="flex-1 max-w-[1540px] w-full mx-auto px-4 sm:px-8 py-6 space-y-6 relative z-10">
@@ -184,6 +152,9 @@ export function App() {
         </div>
       </main>
 
+      {/* Footer */}
+      <Footer />
+
       {/* Modals */}
       <ExportModal
         isOpen={isExportModalOpen}
@@ -193,4 +164,5 @@ export function App() {
     </div>
   );
 }
+
 export default App;

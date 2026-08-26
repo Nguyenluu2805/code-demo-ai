@@ -1,8 +1,8 @@
 import React, { useRef, useEffect } from 'react';
 import { Player, PlayerRef } from '@remotion/player';
-import { Storyboard } from '../types';
-import { MainComposition } from '../remotion/Composition';
-import { SubtitlesIcon, VideoCameraIcon, ReplayIcon, ClockIcon } from './Icons';
+import { Storyboard } from '../../types';
+import { MainComposition } from '../../remotion/Composition';
+import { SubtitlesIcon, VideoCameraIcon, ReplayIcon, ClockIcon } from '../common/Icons';
 
 interface PlayerViewProps {
   storyboard: Storyboard;

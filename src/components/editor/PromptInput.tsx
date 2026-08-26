@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { SparklesIcon, CodeBracketIcon, PaletteIcon, SmartphoneIcon, MonitorIcon, GaugeIcon } from './Icons';
-import { FileIcon } from '../remotion/components/FileIcon';
-import { AspectRatio, EditorTheme, SpeedMode, THEME_CONFIGS } from '../types';
+import { SparklesIcon, CodeBracketIcon, PaletteIcon, SmartphoneIcon, MonitorIcon, GaugeIcon } from '../common/Icons';
+import { FileIcon } from '../../remotion/components/FileIcon';
+import { AspectRatio, EditorTheme, SpeedMode, THEME_CONFIGS } from '../../types';
 
 interface PromptInputProps {
   onGenerate: (prompt: string, language: string, theme: EditorTheme, aspectRatio: AspectRatio) => Promise<void>;
