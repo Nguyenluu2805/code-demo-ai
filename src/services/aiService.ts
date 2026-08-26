@@ -432,15 +432,51 @@ Chỉ trả về DUY NHẤT một JSON hợp lệ tuân thủ schema:
 }`;
 
   const cleanKey = apiKey.trim();
-  const models = ['gemini-3.6-flash', 'gemini-1.5-flash'];
+  let candidateModels: string[] = [];
+
+  // 1. Dynamic Discovery: Get the exact list of available models for this specific API key
+  try {
+    const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${cleanKey}`);
+    if (listRes.ok) {
+      const listData = await listRes.json();
+      if (Array.isArray(listData.models)) {
+        const usable = listData.models
+          .filter((m: any) => m.supportedGenerationMethods?.includes('generateContent'))
+          .map((m: any) => m.name); // e.g. "models/gemini-1.5-flash-8b"
+        
+        // Sort: flash models first, then pro, then others
+        usable.sort((a: string, b: string) => {
+          if (a.includes('flash') && !b.includes('flash')) return -1;
+          if (!a.includes('flash') && b.includes('flash')) return 1;
+          return 0;
+        });
+
+        candidateModels = usable;
+      }
+    } else {
+      const errData = await listRes.json().catch(() => ({}));
+      const message = errData.error?.message || `HTTP ${listRes.status}: Lỗi xác thực Google AI`;
+      throw new Error(message);
+    }
+  } catch (err: any) {
+    if (err.message && (err.message.includes('API key') || err.message.includes('leaked') || err.message.includes('PERMISSION_DENIED'))) {
+      throw err;
+    }
+  }
+
+  if (candidateModels.length === 0) {
+    candidateModels = ['models/gemini-1.5-flash', 'models/gemini-pro', 'models/gemini-2.0-flash'];
+  }
+
   let lastErrorMsg = '';
 
-  for (const model of models) {
+  for (const modelPath of candidateModels.slice(0, 3)) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 18000); // 18s timeout
 
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${cleanKey}`;
+      const isAdvancedModel = modelPath.includes('1.5') || modelPath.includes('2.') || modelPath.includes('3.');
+      const url = `https://generativelanguage.googleapis.com/v1beta/${modelPath}:generateContent?key=${cleanKey}`;
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -457,7 +493,7 @@ Chỉ trả về DUY NHẤT một JSON hợp lệ tuân thủ schema:
           ],
           generationConfig: {
             temperature: 0.2,
-            responseMimeType: 'application/json'
+            responseMimeType: isAdvancedModel ? 'application/json' : undefined
           }
         })
       });
@@ -468,7 +504,6 @@ Chỉ trả về DUY NHẤT một JSON hợp lệ tuân thủ schema:
         const errorData = await response.json().catch(() => ({}));
         const message = errorData.error?.message || `HTTP ${response.status} lỗi kết nối`;
 
-        // Direct authentication or quota errors -> throw immediately
         if (
           response.status === 400 ||
           response.status === 403 ||
@@ -500,7 +535,7 @@ Chỉ trả về DUY NHẤT một JSON hợp lệ tuân thủ schema:
     } catch (err: any) {
       clearTimeout(timeoutId);
       if (err.name === 'AbortError') {
-        lastErrorMsg = 'Yêu cầu tới Google AI Studio quá thời gian chờ (Timeout 15s). Vui lòng thử lại.';
+        lastErrorMsg = 'Yêu cầu tới Google AI Studio quá thời gian chờ (Timeout). Vui lòng thử lại.';
       } else if (
         err.message &&
         (err.message.includes('API key') ||
