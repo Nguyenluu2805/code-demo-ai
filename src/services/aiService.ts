@@ -1,15 +1,11 @@
 import { Storyboard, Scene, AspectRatio, EditorTheme } from '../types';
 
 /**
- * Robust JSON parser that handles markdown codeblocks and extra characters from LLMs
+ * Robust JSON parser that handles markdown codeblocks, trailing commas, and escaped characters from LLMs
  */
 function cleanAndParseJson<T>(raw: string): T {
   let cleaned = raw.trim();
-  if (cleaned.startsWith('```json')) {
-    cleaned = cleaned.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-  } else if (cleaned.startsWith('```')) {
-    cleaned = cleaned.replace(/^```\s*/, '').replace(/\s*```$/, '');
-  }
+  cleaned = cleaned.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '');
 
   const startIdx = cleaned.indexOf('{');
   const endIdx = cleaned.lastIndexOf('}');
@@ -17,7 +13,44 @@ function cleanAndParseJson<T>(raw: string): T {
     cleaned = cleaned.substring(startIdx, endIdx + 1);
   }
 
-  return JSON.parse(cleaned) as T;
+  // Remove trailing commas
+  cleaned = cleaned.replace(/,\s*([}\]])/g, '$1');
+
+  try {
+    return JSON.parse(cleaned) as T;
+  } catch (err: any) {
+    // Attempt fallback sanitization for control characters in strings
+    const sanitized = cleaned.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, '');
+    return JSON.parse(sanitized) as T;
+  }
+}
+
+/**
+ * Validates a Gemini API Key directly against Google ModelService and returns the active model
+ */
+export async function validateGeminiApiKey(
+  apiKey: string
+): Promise<{ valid: boolean; model?: string; error?: string }> {
+  const cleanKey = apiKey.trim();
+  if (!cleanKey) return { valid: false, error: 'Vui lòng nhập API Key' };
+
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${cleanKey}`);
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { valid: false, error: data.error?.message || `HTTP ${res.status}: Lỗi xác thực Google AI` };
+    }
+    if (Array.isArray(data.models)) {
+      const usable = data.models
+        .filter((m: any) => m.supportedGenerationMethods?.includes('generateContent'))
+        .map((m: any) => m.name.replace(/^models\//, ''));
+      const activeModel = usable.find((m: string) => m.includes('flash')) || usable[0] || 'gemini-1.5-flash';
+      return { valid: true, model: activeModel };
+    }
+    return { valid: true, model: 'gemini-1.5-flash' };
+  } catch (err: any) {
+    return { valid: false, error: err.message || 'Không thể kết nối đến Google AI Studio. Vui lòng kiểm tra mạng.' };
+  }
 }
 
 export const PRESET_TEMPLATES: Record<string, Storyboard> = {

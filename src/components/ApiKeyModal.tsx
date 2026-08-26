@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { KeyIcon, CheckIcon, CloseIcon, ShieldCheckIcon } from './Icons';
+import { validateGeminiApiKey } from '../services/aiService';
 
 interface ApiKeyModalProps {
   isOpen: boolean;
@@ -16,8 +17,27 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
 }) => {
   const [inputKey, setInputKey] = useState(apiKey);
   const [saved, setSaved] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ valid: boolean; message: string } | null>(null);
 
   if (!isOpen) return null;
+
+  const handleTestKey = async () => {
+    if (!inputKey.trim()) {
+      setTestResult({ valid: false, message: 'Vui lòng nhập API Key trước khi kiểm tra.' });
+      return;
+    }
+    setIsTesting(true);
+    setTestResult(null);
+
+    const res = await validateGeminiApiKey(inputKey.trim());
+    setIsTesting(false);
+    if (res.valid) {
+      setTestResult({ valid: true, message: `Kết nối thành công! Đã nhận diện mô hình: ${res.model}` });
+    } else {
+      setTestResult({ valid: false, message: res.error || 'API Key không hợp lệ.' });
+    }
+  };
 
   const handleSave = () => {
     onSaveKey(inputKey.trim());
@@ -54,22 +74,49 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
           </p>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-400 mb-1.5">
-              Gemini API Key
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-semibold text-slate-400">
+                Gemini API Key
+              </label>
+              <button
+                type="button"
+                onClick={handleTestKey}
+                disabled={isTesting || !inputKey.trim()}
+                className="text-[11px] font-medium text-indigo-400 hover:text-indigo-300 disabled:text-slate-600 cursor-pointer underline"
+              >
+                {isTesting ? 'Đang kiểm tra...' : '🔍 Kiểm tra kết nối'}
+              </button>
+            </div>
             <input
               type="password"
               value={inputKey}
-              onChange={(e) => setInputKey(e.target.value)}
+              onChange={(e) => {
+                setInputKey(e.target.value);
+                setTestResult(null);
+              }}
               placeholder="AIzaSy..."
               className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 font-mono"
             />
           </div>
 
+          {/* Live Test Result */}
+          {testResult && (
+            <div
+              className={`p-3 rounded-xl border text-xs leading-relaxed transition-all ${
+                testResult.valid
+                  ? 'bg-emerald-950/40 border-emerald-500/30 text-emerald-300'
+                  : 'bg-rose-950/40 border-rose-500/30 text-rose-300'
+              }`}
+            >
+              <div className="font-semibold mb-0.5">{testResult.valid ? '✅ Hợp lệ' : '❌ Lỗi kết nối'}</div>
+              <div>{testResult.message}</div>
+            </div>
+          )}
+
           <div className="flex items-center justify-between text-xs text-slate-400 bg-slate-950/60 p-3 rounded-xl border border-slate-800">
             <div className="flex items-center gap-2">
               <ShieldCheckIcon className="w-4 h-4 text-emerald-400" />
-              <span>Lưu an toàn trên LocalStorage trình duyệt</span>
+              <span>Lưu an toàn trên LocalStorage</span>
             </div>
             <a
               href="https://aistudio.google.com/app/apikey"
@@ -82,7 +129,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
           </div>
 
           <div className="text-[11px] text-slate-400 italic">
-            * Lưu ý: Nếu không nhập API Key, ứng dụng vẫn hoạt động bình thường với các template có sẵn hoặc thuật toán thông minh offline.
+            * Lưu ý: Nếu không nhập API Key, ứng dụng vẫn hoạt động bình thường với bộ tổng hợp chuyên sâu và thuật toán offline.
           </div>
         </div>
 
@@ -93,6 +140,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
               onClick={() => {
                 onSaveKey('');
                 setInputKey('');
+                setTestResult(null);
                 onClose();
               }}
               className="px-3 py-1.5 rounded-xl text-xs font-medium text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
