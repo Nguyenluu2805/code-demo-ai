@@ -504,17 +504,15 @@ Chỉ trả về DUY NHẤT một JSON hợp lệ tuân thủ schema:
         const errorData = await response.json().catch(() => ({}));
         const message = errorData.error?.message || `HTTP ${response.status} lỗi kết nối`;
 
+        // Only throw immediate fatal errors for invalid authentication / leaked keys
         if (
-          response.status === 400 ||
-          response.status === 403 ||
-          response.status === 429 ||
-          message.includes('API key') ||
-          message.includes('leaked') ||
-          message.includes('Quota')
+          (response.status === 400 || response.status === 403) &&
+          (message.includes('API key') || message.includes('leaked') || message.includes('PERMISSION_DENIED'))
         ) {
           throw new Error(message);
         }
 
+        // On 429, 503, or high demand -> try next candidate model
         lastErrorMsg = message;
         continue;
       }
