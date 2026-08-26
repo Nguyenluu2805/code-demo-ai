@@ -434,17 +434,22 @@ Chỉ trả về DUY NHẤT một JSON hợp lệ tuân thủ schema:
   const cleanKey = apiKey.trim();
   let candidateModels: string[] = [];
 
-  // 1. Dynamic Discovery: Get the exact list of available models for this specific API key
+  // 1. Dynamic Discovery: Get available models with 8s timeout
   try {
-    const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${cleanKey}`);
+    const listController = new AbortController();
+    const listTimeout = setTimeout(() => listController.abort(), 8000);
+    const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${cleanKey}`, {
+      signal: listController.signal
+    });
+    clearTimeout(listTimeout);
+
     if (listRes.ok) {
       const listData = await listRes.json();
       if (Array.isArray(listData.models)) {
         const usable = listData.models
           .filter((m: any) => m.supportedGenerationMethods?.includes('generateContent'))
-          .map((m: any) => m.name); // e.g. "models/gemini-1.5-flash-8b"
+          .map((m: any) => m.name);
         
-        // Sort: flash models first, then pro, then others
         usable.sort((a: string, b: string) => {
           if (a.includes('flash') && !b.includes('flash')) return -1;
           if (!a.includes('flash') && b.includes('flash')) return 1;
@@ -456,7 +461,9 @@ Chỉ trả về DUY NHẤT một JSON hợp lệ tuân thủ schema:
     } else {
       const errData = await listRes.json().catch(() => ({}));
       const message = errData.error?.message || `HTTP ${listRes.status}: Lỗi xác thực Google AI`;
-      throw new Error(message);
+      if (listRes.status === 400 || listRes.status === 403) {
+        throw new Error(message);
+      }
     }
   } catch (err: any) {
     if (err.message && (err.message.includes('API key') || err.message.includes('leaked') || err.message.includes('PERMISSION_DENIED'))) {
@@ -472,7 +479,7 @@ Chỉ trả về DUY NHẤT một JSON hợp lệ tuân thủ schema:
 
   for (const modelPath of candidateModels.slice(0, 3)) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 18000); // 18s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 40000); // 40s generous timeout for complex code generation
 
     try {
       const isAdvancedModel = modelPath.includes('1.5') || modelPath.includes('2.') || modelPath.includes('3.');
